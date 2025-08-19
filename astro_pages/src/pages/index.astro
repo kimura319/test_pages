@@ -17,6 +17,15 @@ import TextBox from '../components/textbox.astro';
 			required={true}
 		/>
 
+		<TextBox 
+			label="数値" 
+			placeholder="12345" 
+			type = "number"
+			id="num" 
+			name="num" 
+			required={true}
+		/>
+
 		<div class="button-container">
 			<button id="confirmButton" class="confirm-button" disabled>
 				決定
@@ -24,7 +33,8 @@ import TextBox from '../components/textbox.astro';
 		</div>
 
 		<div id="resultMessage" class="result-message" style="display: none;">
-			<p>こんにちは、<span id="nameDisplay"></span>さん！</p>
+			<p>こんにちは、<span id="display_name"></span>さん！</p>
+			<p>今日のラッキーナンバーは<span id="display_number"></span>さん！</p>
 		</div>
 
 	</div>
@@ -130,11 +140,13 @@ import TextBox from '../components/textbox.astro';
 	// DOMが読み込まれた後に実行
 	document.addEventListener('DOMContentLoaded', function() {
 		const nameInput = document.getElementById('name') as HTMLInputElement;
+		const numberInput = document.getElementById('num') as HTMLInputElement;
 		const confirmButton = document.getElementById('confirmButton') as HTMLButtonElement;
 		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
-		const nameDisplay = document.getElementById('nameDisplay') as HTMLElement;
+		const display_name = document.getElementById('display_name') as HTMLElement;
+		const display_number = document.getElementById('display_number') as HTMLElement;
 
-		if (!nameInput || !confirmButton || !resultMessage || !nameDisplay ) {
+		if (!nameInput || !confirmButton || !resultMessage || !display_name || !display_number) {
 			console.error('Required elements not found');
 			return;
 		}
@@ -145,11 +157,18 @@ import TextBox from '../components/textbox.astro';
 			// 名前が入力されている場合はボタンを有効化、そうでなければ無効化
 			confirmButton.disabled = name.length === 0;
 		});
+		numberInput.addEventListener('input', function() {
+			const num = this.value.trim();
+			// 名前が入力されている場合はボタンを有効化、そうでなければ無効化
+			confirmButton.disabled = num.length === 0;
+		});
+
 
 		// 決定ボタンのクリックイベント
 		confirmButton.addEventListener('click', async function() {
 			const name = nameInput.value.trim();
-			if (name) {
+			const num = numberInput.value.trim();
+			if (name && num) {
 				// ボタンを無効化
 				confirmButton.disabled = true;
 				// 入力フィールドをクリア
@@ -158,7 +177,8 @@ import TextBox from '../components/textbox.astro';
 				// resultMessageの表示
 				resultMessage.style.display = 'block';
 				resultMessage.className = 'result-message';
-				nameDisplay.textContent = name;
+				display_name.textContent = name;
+				display_number.textContent = num;
 			}
 		});
 
