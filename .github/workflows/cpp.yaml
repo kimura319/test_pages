@@ -19,6 +19,7 @@ on:
 env:
   # CMake build type の設置 (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  NAME: ${{ github.event.client_payload.name }}
 
   # ワークフローのジョブ定義
 jobs:
@@ -30,9 +31,7 @@ jobs:
 
     steps:
       - name: echo name
-        run: echo ${{ env.NAME }}
-        env:
-          NAME: ${{ github.event.client_payload.name }}
+        run: echo ${{env.NAME}}
 
       # コードのチェックアウト
       - name: Checkout Repository
@@ -42,8 +41,6 @@ jobs:
       - name: Install g++
         run: sudo apt update && sudo apt install -y g++
       - name: Compile C++ file
-        run: g++ -D ADD_NAME=${{ env.NAME }} -o hello src/hello.cpp
-        env:
-          NAME: ${{ github.event.client_payload.name }}
+        run: g++ -D ADD_NAME=abc -o hello src/hello.cpp
       - name: Execute C++ file
         run: ./hello
