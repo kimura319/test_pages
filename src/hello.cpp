@@ -4,6 +4,7 @@
 #define ADD_NUM 5
 #endif
 
+// #ifndefを忘れずに
 #ifndef ADD_NAME
 #define ADD_NAME "nanasi"
 #endif
