@@ -10,9 +10,9 @@ on:
   # ワークフローの手動実行
   workflow_dispatch:
     inputs:
-    number:
-      description: 'Number'
-      required: true
+      number:
+        description: 'Number'
+        required: true
   repository_dispatch:
     types: [name_submitted]
 
