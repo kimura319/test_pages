@@ -1,0 +1,176 @@
+---
+import Layout from '../layouts/Layout.astro';
+import TextBox from '../components/TextBox.astro';
+
+
+// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
+// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+---
+
+<Layout>
+	<div class="demo-container">
+		<h2>pagesのデモ</h2>
+		
+		<TextBox 
+			label="お名前" 
+			placeholder="山田太郎" 
+			type = "text"
+			id="name" 
+			name="name" 
+			required={true}
+		/>
+
+		<div class="button-container">
+			<button id="confirmButton" class="confirm-button" disabled>
+				決定
+			</button>
+		</div>
+
+		<div id="resultMessage" class="result-message" style="display: none;">
+			<p>こんにちは、<span id="nameDisplay"></span>さん！</p>
+		</div>
+
+	</div>
+</Layout>
+
+<style>
+	.demo-container {
+		max-width: 600px;
+		margin: 150px auto;
+		padding: 0 20px;
+	}
+
+	.demo-container h2 {
+		color: #2A233E;
+		font-size: 24px;
+		font-weight: bold;
+		margin-bottom: 30px;
+		text-align: center;
+	}
+
+	.button-container {
+		display: flex;
+		justify-content: center;
+		margin-top: 20px;
+		margin-bottom: 20px;
+	}
+
+	.confirm-button {
+		padding: 12px 24px;
+		background-color: #FF7E33;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		min-width: 120px;
+	}
+
+	.confirm-button:hover:not(:disabled) {
+		background-color: #e6691a;
+	}
+
+	.confirm-button:disabled {
+		background-color: #9ca3af;
+		cursor: not-allowed;
+	}
+
+	.result-message {
+		text-align: center;
+		padding: 15px;
+		background-color: #f0f9ff;
+		border: 2px solid #0ea5e9;
+		border-radius: 8px;
+		margin-top: 20px;
+	}
+
+	.result-message p {
+		margin: 0;
+		color: #0c4a6e;
+		font-size: 18px;
+		font-weight: bold;
+	}
+
+	.result-message span {
+		color: #FF7E33;
+	}
+
+	.status-message {
+		text-align: center;
+		padding: 15px;
+		border-radius: 8px;
+		margin-top: 10px;
+	}
+
+	.status-message.success {
+		background-color: #f0fdf4;
+		border: 2px solid #22c55e;
+		color: #15803d;
+	}
+
+	.status-message.error {
+		background-color: #fef2f2;
+		border: 2px solid #ef4444;
+		color: #dc2626;
+	}
+
+	.status-message.loading {
+		background-color: #fefce8;
+		border: 2px solid #eab308;
+		color: #a16207;
+	}
+
+	.status-message p {
+		margin: 0;
+		font-weight: bold;
+	}
+
+</style>
+
+<script>
+	// DOMが読み込まれた後に実行
+	document.addEventListener('DOMContentLoaded', function() {
+		const nameInput = document.getElementById('name') as HTMLInputElement;
+		const confirmButton = document.getElementById('confirmButton') as HTMLButtonElement;
+		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
+		const nameDisplay = document.getElementById('nameDisplay') as HTMLElement;
+
+		if (!nameInput || !confirmButton || !resultMessage || !nameDisplay ) {
+			console.error('Required elements not found');
+			return;
+		}
+
+		// 名前入力フィールドの変更を監視
+		nameInput.addEventListener('input', function() {
+			const name = this.value.trim();
+			// 名前が入力されている場合はボタンを有効化、そうでなければ無効化
+			confirmButton.disabled = name.length === 0;
+		});
+
+		// 決定ボタンのクリックイベント
+		confirmButton.addEventListener('click', async function() {
+			const name = nameInput.value.trim();
+			if (name) {
+				// ボタンを無効化
+				confirmButton.disabled = true;
+				// 入力フィールドをクリア
+				nameInput.value = '';
+
+				// resultMessageの表示
+				resultMessage.style.display = 'block';
+				resultMessage.className = 'result-message';
+				nameDisplay.textContent = name;
+			}
+		});
+
+		// Enterキーでも決定できるようにする
+		nameInput.addEventListener('keypress', function(event) {
+			if (event.key === 'Enter' && !confirmButton.disabled) {
+				confirmButton.click();
+			}
+		});
+	});
+</script>
+

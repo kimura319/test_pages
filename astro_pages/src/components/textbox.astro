@@ -1,0 +1,79 @@
+---
+interface Props {
+  label?: string;
+  placeholder?: string;
+  type?: "text" | "email" | "password" | "number" | "tel" | "url" | "search";
+  id?: string;
+  name?: string;
+  required?: boolean;
+}
+
+const { 
+  label, 
+  placeholder = "", 
+  type = "text", 
+  required = false, 
+  id, 
+  name 
+} = Astro.props;
+---
+
+<div class="textbox-container">
+  {label && <label for={id} class="textbox-label">{label}</label>}
+  <input 
+    type={type}
+    id={id}
+    name={name}
+    placeholder={placeholder}
+    required={required}
+    class="textbox-input"
+  />
+</div>
+
+<style>
+  .textbox-container {
+    margin-bottom: 20px;
+  }
+
+  .textbox-label {
+    display: block;
+    margin-bottom: 8px;
+    color: #2A233E;
+    font-size: 16px;
+    font-weight: bold;
+  }
+
+  .textbox-input {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 16px;
+    background-color: #ffffff;
+    color: #2A233E;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+  }
+
+  .textbox-input:focus {
+    outline: none;
+    border-color: #FF7E33;
+    box-shadow: 0 0 0 3px rgba(255, 126, 51, 0.1);
+  }
+
+  .textbox-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .textbox-input:hover {
+    border-color: #d1d5db;
+  }
+
+  .textbox-input:disabled {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+    color: #6b7280;
+    cursor: not-allowed;
+  }
+</style>
