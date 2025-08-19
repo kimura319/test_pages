@@ -1,0 +1,44 @@
+# フローの名前
+name: hello_name
+
+# ワークフローのトリガー
+on:
+  # メインブランチへのプッシュ
+  # push:
+  #   branches: 
+  #     - main
+  # ワークフローの手動実行
+  workflow_dispatch:
+    inputs:
+    number:
+      description: 'Number'
+      required: true
+  repository_dispatch:
+    types: [name_submitted]
+
+env:
+  # CMake build type の設置 (Release, Debug, RelWithDebInfo, etc.)
+  BUILD_TYPE: Release
+
+  # ワークフローのジョブ定義
+jobs:
+  # ジョブの名前
+  namebuild:
+    name: name_test
+    # 実行環境（ランナー）の設定
+    runs-on: ubuntu-latest
+
+    steps:
+      # コードのチェックアウト
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # cMakeを使わないcppのビルド・実行
+      - name: Install g++
+        run: sudo apt update && sudo apt install -y g++
+      - name: Compile C++ file
+        run: g++ -D ADD_NAME=$NAME -o hello src/hello.cpp
+        env:
+          NAME: ${{ github.event.client_payload.name }}
+      - name: Execute C++ file
+        run: ./hello

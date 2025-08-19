@@ -137,6 +137,44 @@ import TextBox from '../components/textbox.astro';
 </style>
 
 <script>
+	// GitHub Actionsに送信する関数
+	async function sendToGitHubActions(username: string): Promise<void> {
+		const owner = 'kimura319';  // GitHubユーザー名
+		const repo = 'test_pages';  // リポジトリ名
+		
+		// 注意: 本番環境では環境変数やサーバーサイドAPIを使用してください
+		// const token = process.env.GITHUB_TOKEN;  // サーバーサイドで使用
+		
+		// デモ用の設定（実際のトークンは入力してください）
+		const token = prompt('GitHub Personal Access Tokenを入力してください:');
+		
+		if (!token) {
+			throw new Error('GitHub tokenが設定されていません');
+		}
+
+		// Repository Dispatch APIエンドポイント
+		const url = `https://api.github.com/repos/${owner}/${repo}/dispatches`;
+
+		const response = await fetch(url, {
+			method: 'POST',
+			headers: {
+				'Authorization': `Bearer ${token}`,
+				'Accept': 'application/vnd.github.v3+json',
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				event_type: 'name_submitted',
+				client_payload: {
+					name: username,
+				}
+			})
+		});
+
+		if (!response.ok) {
+			throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+		}
+	}
+
 	// DOMが読み込まれた後に実行
 	document.addEventListener('DOMContentLoaded', function() {
 		const nameInput = document.getElementById('name') as HTMLInputElement;
@@ -171,14 +209,27 @@ import TextBox from '../components/textbox.astro';
 			if (name && num) {
 				// ボタンを無効化
 				confirmButton.disabled = true;
-				// 入力フィールドをクリア
-				nameInput.value = '';
+				confirmButton.textContent = '送信中...';
 
 				// resultMessageの表示
 				resultMessage.style.display = 'block';
 				resultMessage.className = 'result-message';
 				display_name.textContent = name;
 				display_number.textContent = num;
+			}
+
+			try {
+				// GitHub Actionsに送信
+				await sendToGitHubActions(name);	
+			} catch (error) {
+				console.error('送信エラー:', error);
+			} finally {
+				// 入力フィールドをクリア
+				nameInput.value = '';
+				numberInput.value = '';
+				
+				// ボタンを有効化
+				confirmButton.textContent = '決定';
 			}
 		});
 
