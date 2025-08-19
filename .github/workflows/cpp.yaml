@@ -29,6 +29,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: echo name
+        run: echo ${{ env.NAME }}
+        env:
+          NAME: ${{ github.event.client_payload.name }}
+
       # コードのチェックアウト
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -37,7 +42,7 @@ jobs:
       - name: Install g++
         run: sudo apt update && sudo apt install -y g++
       - name: Compile C++ file
-        run: g++ -D ADD_NAME=$NAME -o hello src/hello.cpp
+        run: g++ -D ADD_NAME=${{ env.NAME }} -o hello src/hello.cpp
         env:
           NAME: ${{ github.event.client_payload.name }}
       - name: Execute C++ file
