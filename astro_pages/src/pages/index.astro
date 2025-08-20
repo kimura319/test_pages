@@ -240,7 +240,7 @@ import TextBox from '../components/textbox.astro';
 				const errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
 
 				statusMessage.className = 'status-message error';
-				statusText.textContent = `送信に失敗しました: ${errorMessage}`;
+				statusText.textContent = `送信に失敗しました: ${error}`;
 			} finally {
 				// 入力フィールドをクリア
 				nameInput.value = '';
