@@ -143,20 +143,20 @@ import TextBox from '../components/textbox.astro';
 <script>
 	// GitHub Actionsに送信する関数
 	async function sendToGitHubActions(username: string, number: string): Promise<void> {
-
+		const owner = 'kimura319';  // GitHubユーザー名
+		const repo = 'test_pages';  // リポジトリ名
 		
-		// 注意: 本番環境では環境変数やサーバーサイドAPIを使用してください
-		// const token = process.env.GITHUB_TOKEN;  // サーバーサイドで使用
+		const token = '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';
 		
 		// デモ用の設定（実際のトークンは入力してください）
-		const token = prompt('GitHub Personal Access Tokenを入力してください:');
+		// const token = prompt('GitHub Personal Access Tokenを入力してください:');
 		
 		if (!token) {
 			throw new Error('GitHub tokenが設定されていません');
 		}
 
 		// Repository Dispatch APIエンドポイント
-		const url = `https://api.github.com/repos/${import.meta.env.PUBLIC_OWNER}/${import.meta.env.PUBLIC_REPO}/actions/workflows/cpp.yaml/dispatches`;
+		const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/cpp.yaml/dispatches`;
 
 		const response = await fetch(url, {
 			method: 'POST',
