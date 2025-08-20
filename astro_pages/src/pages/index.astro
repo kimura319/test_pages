@@ -37,6 +37,10 @@ import TextBox from '../components/textbox.astro';
 			<p>今日のラッキーナンバーは<span id="display_number"></span>さん！</p>
 		</div>
 
+		<div id="statusMessage" class="status-message" style="display: none;">
+			<p id="statusText"></p>
+		</div>
+
 	</div>
 </Layout>
 
@@ -153,18 +157,18 @@ import TextBox from '../components/textbox.astro';
 		}
 
 		// Repository Dispatch APIエンドポイント
-		const url = `https://api.github.com/repos/${owner}/${repo}/dispatches`;
+		const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/cpp.yaml/dispatches`;
 
 		const response = await fetch(url, {
 			method: 'POST',
 			headers: {
+				'Accept': 'application/vnd.github+json',
 				'Authorization': `Bearer ${token}`,
-				'Accept': 'application/vnd.github.v3+json',
-				'Content-Type': 'application/json'
+				'X-GitHub-Api-Version': '2022-11-28'
 			},
 			body: JSON.stringify({
-				event_type: 'name_submitted',
-				client_payload: {
+				ref: 'main',
+				inputs: {
 					name: username,
 				}
 			})
@@ -183,8 +187,10 @@ import TextBox from '../components/textbox.astro';
 		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
 		const display_name = document.getElementById('display_name') as HTMLElement;
 		const display_number = document.getElementById('display_number') as HTMLElement;
+		const statusMessage = document.getElementById('statusMessage') as HTMLElement;
+		const statusText = document.getElementById('statusText') as HTMLElement;
 
-		if (!nameInput || !confirmButton || !resultMessage || !display_name || !display_number) {
+		if (!nameInput || !confirmButton || !resultMessage || !display_name || !display_number || !statusMessage || !statusText) {
 			console.error('Required elements not found');
 			return;
 		}
@@ -216,13 +222,25 @@ import TextBox from '../components/textbox.astro';
 				resultMessage.className = 'result-message';
 				display_name.textContent = name;
 				display_number.textContent = num;
+
+				// ステータスメッセージを表示
+				statusMessage.style.display = 'block';
+				statusMessage.className = 'status-message loading';
+				statusText.textContent = 'GitHub Actionsに送信しています...';
 			}
 
 			try {
 				// GitHub Actionsに送信
 				await sendToGitHubActions(name);	
+				statusMessage.className = 'status-message success';
+				statusText.textContent = 'GitHub Actionsに正常に送信されました！Actionsタブでワークフローをご確認ください。';
+	
 			} catch (error) {
 				console.error('送信エラー:', error);
+				const errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+
+				statusMessage.className = 'status-message error';
+				statusText.textContent = `送信に失敗しました: ${errorMessage}`;
 			} finally {
 				// 入力フィールドをクリア
 				nameInput.value = '';
