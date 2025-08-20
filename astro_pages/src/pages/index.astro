@@ -142,7 +142,7 @@ import TextBox from '../components/textbox.astro';
 
 <script>
 	// GitHub Actionsに送信する関数
-	async function sendToGitHubActions(username: string): Promise<void> {
+	async function sendToGitHubActions(username: string, number: string): Promise<void> {
 		const owner = 'kimura319';  // GitHubユーザー名
 		const repo = 'test_pages';  // リポジトリ名
 		
@@ -170,6 +170,7 @@ import TextBox from '../components/textbox.astro';
 				ref: 'main',
 				inputs: {
 					name: username,
+					number: number
 				}
 			})
 		});
@@ -236,7 +237,7 @@ import TextBox from '../components/textbox.astro';
 
 			try {
 				// GitHub Actionsに送信
-				await sendToGitHubActions(name);    
+				await sendToGitHubActions(name, num);    
 				statusMessage.className = 'status-message success';
 				statusText.textContent = 'GitHub Actionsに正常に送信されました！Actionsタブでワークフローをご確認ください。';
 
