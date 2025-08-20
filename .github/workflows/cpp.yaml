@@ -47,6 +47,6 @@ jobs:
       - name: Install g++
         run: sudo apt update && sudo apt install -y g++
       - name: Compile C++ file
-        run: g++ -D ADD_NAME=\"${{env.NAME}}\" -o hello src/hello.cpp
+        run: g++ -D ADD_NAME=\"${{env.NAME}}\" ADD_NUM=${{env.number}} -o hello src/hello.cpp
       - name: Execute C++ file
         run: ./hello
