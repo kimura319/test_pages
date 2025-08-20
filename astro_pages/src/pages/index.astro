@@ -175,7 +175,12 @@ import TextBox from '../components/textbox.astro';
 		});
 
 		if (!response.ok) {
-			throw new Error(`GitHub API Error: ${response.status} ${response.statusText}`);
+			// レスポンス詳細も取得
+			let errorDetail = '';
+			try {
+				errorDetail = await response.text();
+			} catch {}
+			throw new Error(`GitHub API Error: ${response.status} ${response.statusText}\n${errorDetail}`);
 		}
 	}
 
@@ -231,21 +236,26 @@ import TextBox from '../components/textbox.astro';
 
 			try {
 				// GitHub Actionsに送信
-				await sendToGitHubActions(name);	
+				await sendToGitHubActions(name);    
 				statusMessage.className = 'status-message success';
 				statusText.textContent = 'GitHub Actionsに正常に送信されました！Actionsタブでワークフローをご確認ください。';
-	
+
 			} catch (error) {
 				console.error('送信エラー:', error);
-				const errorMessage = error instanceof Error ? error.message : '不明なエラーが発生しました';
+				let errorMessage = '不明なエラーが発生しました';
+				if (error instanceof Error) {
+					errorMessage = error.message;
+				} else if (typeof error === 'string') {
+					errorMessage = error;
+				}
 
 				statusMessage.className = 'status-message error';
-				statusText.textContent = `送信に失敗しました: ${error}`;
+				statusText.textContent = `送信に失敗しました: ${errorMessage}`;
 			} finally {
 				// 入力フィールドをクリア
 				nameInput.value = '';
 				numberInput.value = '';
-				
+                
 				// ボタンを有効化
 				confirmButton.textContent = '決定';
 			}
