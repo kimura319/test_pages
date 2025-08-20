@@ -10,6 +10,9 @@ on:
   # ワークフローの手動実行
   workflow_dispatch:
     inputs:
+      name:
+        description: 'Name'
+        required: true
       number:
         description: 'Number'
         required: true
@@ -19,7 +22,10 @@ on:
 env:
   # CMake build type の設置 (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-  NAME: ${{ github.event.client_payload.name }}
+  # NAME: ${{ github.event.client_payload.name }}
+  NAME: ${{ inputs.name }}
+  NUMBER: ${{ inputs.number }}
+
 
   # ワークフローのジョブ定義
 jobs:
