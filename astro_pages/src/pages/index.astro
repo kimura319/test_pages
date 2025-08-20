@@ -143,8 +143,7 @@ import TextBox from '../components/textbox.astro';
 <script>
 	// GitHub Actionsに送信する関数
 	async function sendToGitHubActions(username: string, number: string): Promise<void> {
-		const owner = 'kimura319';  // GitHubユーザー名
-		const repo = 'test_pages';  // リポジトリ名
+
 		
 		// 注意: 本番環境では環境変数やサーバーサイドAPIを使用してください
 		// const token = process.env.GITHUB_TOKEN;  // サーバーサイドで使用
@@ -157,7 +156,7 @@ import TextBox from '../components/textbox.astro';
 		}
 
 		// Repository Dispatch APIエンドポイント
-		const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/cpp.yaml/dispatches`;
+		const url = `https://api.github.com/repos/${import.meta.env.PUBLIC_OWNER}/${import.meta.env.PUBLIC_REPO}/actions/workflows/cpp.yaml/dispatches`;
 
 		const response = await fetch(url, {
 			method: 'POST',
