@@ -294,17 +294,6 @@ import TextBox from '../components/textbox.astro';
 			// file_content.textContent = release.browser_download_url;
 			// const download_url = await fetch(release.browser_download_url);
 			
-			await octokit.request('GET /repos/{owner}/{repo}/releases/assets/{asset_id}', {
-				owner: 'kimura319',
-				repo: 'test_pages',
-				asset_id: 284627415,
-				headers: {
-					'X-GitHub-Api-Version': '2022-11-28'
-				}
-			})
-
-		
-
 			// レスポンスをそのまま表示
 			// file_content.textContent = JSON.stringify(release, null, 2);
 
@@ -323,6 +312,21 @@ import TextBox from '../components/textbox.astro';
 			// 	a.download = 'hello.exe';
 			// 	a.click();
     		// }
+
+			const response = await octokit.request('GET /repos/{owner}/{repo}/releases/assets/{asset_id}', {
+				owner: 'kimura319',
+				repo: 'test_pages',
+				asset_id: 284627415,
+				headers: {
+					Accept: "application/octet-stream",
+					'X-GitHub-Api-Version': '2022-11-28'
+				}
+			})
+
+			file_content.textContent = JSON.stringify(response, null, 2);
+
+
+		
 		});
 		// 決定ボタンのクリックイベント
 		confirmButton.addEventListener('click', async function() {
