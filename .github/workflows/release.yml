@@ -2,9 +2,6 @@ name: auto_release
 
 on:
   workflow_dispatch:
-  push:
-    tags:
-      - 'v*'  # タグプッシュ時にも自動実行
 
 jobs:
   release_artifact:
@@ -19,7 +16,7 @@ jobs:
       - name: Compile C++ file
         run: g++ -o hello.exe src/hello.cpp
 
-      # タグの生成
+      # タグの生成（日付使用）
       - name: Generate release tag
         id: tag
         run: |

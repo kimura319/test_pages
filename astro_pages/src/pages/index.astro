@@ -178,6 +178,8 @@ import TextBox from '../components/textbox.astro';
 </style>
 
 <script>
+	import { Octokit } from "https://esm.sh/@octokit/core";
+
 	// GitHub Actionsに送信する関数
 	async function sendToGitHubActions(username: string, number: string): Promise<void> {
 		const owner = 'kimura319';  // GitHubユーザー名
@@ -274,32 +276,54 @@ import TextBox from '../components/textbox.astro';
 
 		// githubの最新リリースからファイルを取得
 		fetch_releases_button.addEventListener('click', async function() {
-			const owner = 'kimura319';
-			const repo = 'test_pages';
-			const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+			// Octokit.js
+			// https://github.com/octokit/core.js#readme
+			const octokit = new Octokit();
+			// const owner = 'kimura319';
+			// const repo = 'test_pages';
+			// const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+			// const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/assets/284627415`;
+
+			// const response = await fetch(releases_url);
+			// if (!response.ok) {
+			// 	file_content.textContent = '取得失敗: ' + response.statusText;
+			// 	return;
+			// }
+			// const release = await response.json();
+
+			// file_content.textContent = release.browser_download_url;
+			// const download_url = await fetch(release.browser_download_url);
 			
-			const response = await fetch(releases_url);
-			if (!response.ok) {
-				file_content.textContent = '取得失敗: ' + response.statusText;
-				return;
-			}
-			const release = await response.json();
+			await octokit.request('GET /repos/{owner}/{repo}/releases/assets/{asset_id}', {
+				owner: 'kimura319',
+				repo: 'test_pages',
+				asset_id: '284627415',
+				headers: {
+					'X-GitHub-Api-Version': '2022-11-28'
+				}
+			})
 
-			// hello.exeを探す
-    		const exeAsset = release.assets.find((asset: any) => asset.name === 'hello.exe');
-			if (exeAsset) {
-				// バイナリをダウンロード
-				const binaryResponse = await fetch(exeAsset.browser_download_url);
-				const blob = await binaryResponse.blob();
+		
+
+			// レスポンスをそのまま表示
+			// file_content.textContent = JSON.stringify(release, null, 2);
+
+			// release内のassetsの中から、name が hello.exe と一致するアセットを探す
+    		// const exeAsset = release.assets.find((asset: any) => asset.name === 'hello.exe');
+			// if (exeAsset) {
+			// 	// バイナリをダウンロード
+			// 	const binaryResponse = await fetch(exeAsset.browser_download_url);
+			// 	// file_content.textContent = exeAsset.browser_download_url;
+
+			// 	const blob = await binaryResponse.blob();
 				
-				// ファイルとして保存
-				const url = URL.createObjectURL(blob);
-				a.href = url;
-				a.download = 'hello.exe';
-				a.click();
-    		}
+			// 	// ファイルとして保存
+			// 	const url = URL.createObjectURL(blob);
+			// 	a.href = url;
+			// 	a.download = 'hello.exe';
+			// 	a.click();
+    		// }
 		});
-
 		// 決定ボタンのクリックイベント
 		confirmButton.addEventListener('click', async function() {
 			const name = nameInput.value.trim();
