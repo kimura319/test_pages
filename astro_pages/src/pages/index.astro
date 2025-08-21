@@ -30,7 +30,15 @@ import TextBox from '../components/textbox.astro';
 			<button id="confirmButton" class="confirm-button" disabled>
 				決定
 			</button>
+			<button id="fetch_contents_button" class="fetch-contents-button">
+				コンテンツ取得
+			</button>
+			<button id="fetch_releases_button" class="fetch-releases-button">
+				最新のリリース取得
+			</button>
 		</div>
+
+		<a id="download"></a>ダウンロード
 
 		<div id="resultMessage" class="result-message" style="display: none;">
 			<p>こんにちは、<span id="display_name"></span>さん！</p>
@@ -40,6 +48,8 @@ import TextBox from '../components/textbox.astro';
 		<div id="statusMessage" class="status-message" style="display: none;">
 			<p id="statusText"></p>
 		</div>
+
+		<pre id="fileContent" class="file-content"></pre>
 
 	</div>
 </Layout>
@@ -62,6 +72,7 @@ import TextBox from '../components/textbox.astro';
 	.button-container {
 		display: flex;
 		justify-content: center;
+		gap: 30px;
 		margin-top: 20px;
 		margin-bottom: 20px;
 	}
@@ -86,6 +97,32 @@ import TextBox from '../components/textbox.astro';
 	.confirm-button:disabled {
 		background-color: #9ca3af;
 		cursor: not-allowed;
+	}
+
+	.fetch-contents-button {
+		padding: 12px 24px;
+		background-color: #FF7E33;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		min-width: 120px;
+	}
+
+	.fetch-releases-button {
+		padding: 12px 24px;
+		background-color: #8e6eff;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		min-width: 120px;
 	}
 
 	.result-message {
@@ -146,10 +183,8 @@ import TextBox from '../components/textbox.astro';
 		const owner = 'kimura319';  // GitHubユーザー名
 		const repo = 'test_pages';  // リポジトリ名
 		
-		const token = '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';
-		
 		// デモ用の設定（実際のトークンは入力してください）
-		// const token = prompt('GitHub Personal Access Tokenを入力してください:');
+		const token = prompt('GitHub Personal Access Tokenを入力してください:');
 		
 		if (!token) {
 			throw new Error('GitHub tokenが設定されていません');
@@ -189,11 +224,17 @@ import TextBox from '../components/textbox.astro';
 		const nameInput = document.getElementById('name') as HTMLInputElement;
 		const numberInput = document.getElementById('num') as HTMLInputElement;
 		const confirmButton = document.getElementById('confirmButton') as HTMLButtonElement;
+		const fetch_contents_button = document.getElementById('fetch_contents_button') as HTMLButtonElement;
+		const fetch_releases_button = document.getElementById('fetch_releases_button') as HTMLButtonElement;
+
 		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
 		const display_name = document.getElementById('display_name') as HTMLElement;
 		const display_number = document.getElementById('display_number') as HTMLElement;
 		const statusMessage = document.getElementById('statusMessage') as HTMLElement;
 		const statusText = document.getElementById('statusText') as HTMLElement;
+		const file_content = document.getElementById('fileContent') as HTMLElement;
+
+		const a = document.getElementById('download') as HTMLAnchorElement;
 
 		if (!nameInput || !confirmButton || !resultMessage || !display_name || !display_number || !statusMessage || !statusText) {
 			console.error('Required elements not found');
@@ -212,6 +253,52 @@ import TextBox from '../components/textbox.astro';
 			confirmButton.disabled = num.length === 0;
 		});
 
+		// githubのレポジトリからファイルを取得
+		fetch_contents_button.addEventListener('click', async function() {
+			const owner = 'kimura319';
+			const repo = 'test_pages';
+			const path = 'src/hello.cpp'; // 取得したいファイルパス
+			const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
+			
+			const response = await fetch(url);
+			if (!response.ok) {
+				file_content.textContent = '取得失敗: ' + response.statusText;
+				return;
+			}
+			const data = await response.json();
+			// base64デコード
+			const content = atob(data.content.replace(/\n/g, ''));
+			// 正規表現によって、複数の "hello" を 「こんにちわ」に置換
+			file_content.textContent = content.replace(/hello/g, 'こんにちは');
+		});
+
+		// githubの最新リリースからファイルを取得
+		fetch_releases_button.addEventListener('click', async function() {
+			const owner = 'kimura319';
+			const repo = 'test_pages';
+			const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+			
+			const response = await fetch(releases_url);
+			if (!response.ok) {
+				file_content.textContent = '取得失敗: ' + response.statusText;
+				return;
+			}
+			const release = await response.json();
+
+			// hello.exeを探す
+    		const exeAsset = release.assets.find((asset: any) => asset.name === 'hello.exe');
+			if (exeAsset) {
+				// バイナリをダウンロード
+				const binaryResponse = await fetch(exeAsset.browser_download_url);
+				const blob = await binaryResponse.blob();
+				
+				// ファイルとして保存
+				const url = URL.createObjectURL(blob);
+				a.href = url;
+				a.download = 'hello.exe';
+				a.click();
+    		}
+		});
 
 		// 決定ボタンのクリックイベント
 		confirmButton.addEventListener('click', async function() {
