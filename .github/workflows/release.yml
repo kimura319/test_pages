@@ -1,0 +1,56 @@
+name: auto_release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'  # タグプッシュ時にも自動実行
+
+jobs:
+  release_artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout_repository
+        uses: actions/checkout@v4
+
+      # cppのビルド
+      - name: Install g++
+        run: sudo apt update && sudo apt install -y g++
+      - name: Compile C++ file
+        run: g++ -o hello.exe src/hello.cpp
+
+      # タグの生成
+      - name: Generate release tag
+        id: tag
+        run: |
+          if [[ "${GITHUB_REF}" == refs/tags/* ]]; then
+            echo "tag=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=v$(date +'%Y%m%d-%H%M%S')" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          release_name: Release ${{ steps.tag.outputs.tag }}
+          body: |
+            ## What's Changed
+            - Automated build of hello.exe from C++ source
+            - Built on: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./hello.exe
+          asset_name: hello.exe
+          asset_content_type: application/octet-stream
