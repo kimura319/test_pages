@@ -178,7 +178,7 @@ import TextBox from '../components/textbox.astro';
 </style>
 
 <script>
-	import { Octokit } from "https://esm.sh/@octokit/core";
+	import { Octokit } from "@octokit/rest";
 
 	// GitHub Actionsに送信する関数
 	async function sendToGitHubActions(username: string, number: string): Promise<void> {
@@ -297,7 +297,7 @@ import TextBox from '../components/textbox.astro';
 			await octokit.request('GET /repos/{owner}/{repo}/releases/assets/{asset_id}', {
 				owner: 'kimura319',
 				repo: 'test_pages',
-				asset_id: '284627415',
+				asset_id: 284627415,
 				headers: {
 					'X-GitHub-Api-Version': '2022-11-28'
 				}
