@@ -276,12 +276,23 @@ import TextBox from '../components/textbox.astro';
 
 		// githubの最新リリースからファイルを取得
 		fetch_releases_button.addEventListener('click', async function() {
-			// Octokit.js
-			// https://github.com/octokit/core.js#readme
-			const octokit = new Octokit();
-			// const owner = 'kimura319';
-			// const repo = 'test_pages';
-			// const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+			const owner = 'kimura319';
+			const repo = 'test_pages';
+
+			// 最新リリースのURLを使用
+			const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
+			const response = await fetch(releases_url);
+			const release = await response.json();
+			// release内のassetsの中から、name が hello.exe と一致するアセットを探す
+    		const exeAsset = release.assets.find((asset: any) => asset.name === 'hello.exe');
+			if (exeAsset) {
+				// バイナリをダウンロード
+				a.href = exeAsset.browser_download_url;
+				a.download = 'hello.exe';
+				a.click();
+    		}
+
+			// アセットIDを使用
 			// const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/assets/284627415`;
 
 			// const response = await fetch(releases_url);
@@ -291,43 +302,29 @@ import TextBox from '../components/textbox.astro';
 			// }
 			// const release = await response.json();
 
-			// file_content.textContent = release.browser_download_url;
-			// const download_url = await fetch(release.browser_download_url);
-			
-			// レスポンスをそのまま表示
 			// file_content.textContent = JSON.stringify(release, null, 2);
+			// // a要素を使ってダウンロード
+			// a.href = release.browser_download_url;
+			// a.download = 'hello.exe';
+			// a.click();
 
-			// release内のassetsの中から、name が hello.exe と一致するアセットを探す
-    		// const exeAsset = release.assets.find((asset: any) => asset.name === 'hello.exe');
-			// if (exeAsset) {
-			// 	// バイナリをダウンロード
-			// 	const binaryResponse = await fetch(exeAsset.browser_download_url);
-			// 	// file_content.textContent = exeAsset.browser_download_url;
-
-			// 	const blob = await binaryResponse.blob();
-				
-			// 	// ファイルとして保存
-			// 	const url = URL.createObjectURL(blob);
-			// 	a.href = url;
-			// 	a.download = 'hello.exe';
-			// 	a.click();
-    		// }
-
-			const response = await octokit.request('GET /repos/{owner}/{repo}/releases/assets/{asset_id}', {
-				owner: 'kimura319',
-				repo: 'test_pages',
-				asset_id: 284627415,
-				headers: {
-					Accept: "application/octet-stream",
-					'X-GitHub-Api-Version': '2022-11-28'
-				}
-			})
-
-			file_content.textContent = JSON.stringify(response, null, 2);
-
-
-		
+			
+			// octokitを使ってアセットを取得
+			// Octokit.js
+			// https://github.com/octokit/core.js#readme
+			// const octokit = new Octokit();
+			// const response = await octokit.request('GET /repos/{owner}/{repo}/releases/assets/{asset_id}', {
+			// 	owner: 'kimura319',
+			// 	repo: 'test_pages',
+			// 	asset_id: 284627415,
+			// 	headers: {
+			// 		Accept: "application/octet-stream",
+			// 		'X-GitHub-Api-Version': '2022-11-28'
+			// 	}
+			// })
+			// file_content.textContent = JSON.stringify(response, null, 2);
 		});
+		
 		// 決定ボタンのクリックイベント
 		confirmButton.addEventListener('click', async function() {
 			const name = nameInput.value.trim();
