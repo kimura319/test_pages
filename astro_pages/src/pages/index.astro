@@ -33,8 +33,8 @@ import TextBox from '../components/textbox.astro';
 			<button id="fetch_contents_button" class="fetch-contents-button">
 				コンテンツ取得
 			</button>
-			<button id="fetch_releases_button" class="fetch-releases-button">
-				最新のリリース取得
+			<button id="binary_download_button" class="binary-download-button" disabled>
+				バイナリ取得 
 			</button>
 		</div>
 
@@ -42,7 +42,7 @@ import TextBox from '../components/textbox.astro';
 
 		<div id="resultMessage" class="result-message" style="display: none;">
 			<p>こんにちは、<span id="display_name"></span>さん！</p>
-			<p>今日のラッキーナンバーは<span id="display_number"></span>さん！</p>
+			<p>数値は<span id="display_number"></span>です！</p>
 		</div>
 
 		<div id="statusMessage" class="status-message" style="display: none;">
@@ -112,7 +112,7 @@ import TextBox from '../components/textbox.astro';
 		min-width: 120px;
 	}
 
-	.fetch-releases-button {
+	.binary-download-button {
 		padding: 12px 24px;
 		background-color: #8e6eff;
 		color: white;
@@ -123,6 +123,11 @@ import TextBox from '../components/textbox.astro';
 		cursor: pointer;
 		transition: background-color 0.3s ease;
 		min-width: 120px;
+	}
+
+	.binary-download-button:disabled {
+		background-color: #9ca3af;
+		cursor: not-allowed;
 	}
 
 	.result-message {
@@ -227,7 +232,7 @@ import TextBox from '../components/textbox.astro';
 		const numberInput = document.getElementById('num') as HTMLInputElement;
 		const confirmButton = document.getElementById('confirmButton') as HTMLButtonElement;
 		const fetch_contents_button = document.getElementById('fetch_contents_button') as HTMLButtonElement;
-		const fetch_releases_button = document.getElementById('fetch_releases_button') as HTMLButtonElement;
+		const binary_download_button = document.getElementById('binary_download_button') as HTMLButtonElement;
 
 		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
 		const display_name = document.getElementById('display_name') as HTMLElement;
@@ -236,6 +241,7 @@ import TextBox from '../components/textbox.astro';
 		const statusText = document.getElementById('statusText') as HTMLElement;
 		const file_content = document.getElementById('fileContent') as HTMLElement;
 
+		// ダウンロードリンクの設定
 		const a = document.getElementById('download') as HTMLAnchorElement;
 
 		if (!nameInput || !confirmButton || !resultMessage || !display_name || !display_number || !statusMessage || !statusText) {
@@ -243,17 +249,25 @@ import TextBox from '../components/textbox.astro';
 			return;
 		}
 
+		// 入力値の両方がある場合のみボタンを有効化
+        function updateButtonState() {
+            const name = nameInput.value.trim();
+            const num = numberInput.value.trim();
+            const enabled = name.length > 0 && num.length > 0;
+            confirmButton.disabled = !enabled;
+            binary_download_button.disabled = !enabled;
+        }
+
+		function display_result_message(name: string, num: string) {
+				resultMessage.style.display = 'block';
+				resultMessage.className = 'result-message';
+				display_name.textContent = name;
+				display_number.textContent = num;
+        }
+
 		// 名前入力フィールドの変更を監視
-		nameInput.addEventListener('input', function() {
-			const name = this.value.trim();
-			// 名前が入力されている場合はボタンを有効化、そうでなければ無効化
-			confirmButton.disabled = name.length === 0;
-		});
-		numberInput.addEventListener('input', function() {
-			const num = this.value.trim();
-			// 名前が入力されている場合はボタンを有効化、そうでなければ無効化
-			confirmButton.disabled = num.length === 0;
-		});
+		nameInput.addEventListener('input', updateButtonState);
+		numberInput.addEventListener('input', updateButtonState);
 
 		// githubのレポジトリからファイルを取得
 		fetch_contents_button.addEventListener('click', async function() {
@@ -274,23 +288,59 @@ import TextBox from '../components/textbox.astro';
 			file_content.textContent = content.replace(/hello/g, 'こんにちは');
 		});
 
-		// githubの最新リリースからファイルを取得
-		fetch_releases_button.addEventListener('click', async function() {
-			const owner = 'kimura319';
-			const repo = 'test_pages';
+		// バイナリ取得ボタンのクリックイベント
+		binary_download_button.addEventListener('click', async function() {
+			const name = nameInput.value.trim();
+			const num = numberInput.value.trim();
 
-			// 最新リリースのURLを使用
-			const releases_url = `https://api.github.com/repos/${owner}/${repo}/releases/latest`;
-			const response = await fetch(releases_url);
-			const release = await response.json();
-			// release内のassetsの中から、name が hello.exe と一致するアセットを探す
-    		const exeAsset = release.assets.find((asset: any) => asset.name === 'hello.exe');
-			if (exeAsset) {
-				// バイナリをダウンロード
-				a.href = exeAsset.browser_download_url;
-				a.download = 'hello.exe';
-				a.click();
-    		}
+			if(name && num) {
+				// 入力フィールドをクリア
+				nameInput.value = '';
+				numberInput.value = '';
+				// ボタンを無効化
+				updateButtonState();
+
+				// resultMessageの表示
+				display_result_message(name, num);
+			}
+
+			try {
+				const bainary_file = await fetch('/test_pages/firmware.bin'); // 取得したいバイナリファイル名
+				const arrayBuffer = await bainary_file.arrayBuffer();
+
+				// arrayBuffer の中身にアクセスするため、Uint8Arrayを使用
+				const bytes = new Uint8Array(arrayBuffer);
+
+				// 加工前のバイナリデータを16進数表記に変換（もっと処理を細かく分割したい）
+				const original_hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+
+				const keyword = "dummy_ssid";
+				const keyword_byte = Array.from(keyword).map(b => b.charCodeAt(0));
+				
+				for (let byte_cnt = 0; byte_cnt < bytes.length - keyword.length ; byte_cnt++) {
+					if (keyword_byte.every((char_byte, index) => bytes[byte_cnt + index] === char_byte)) {
+						for (let i = 0; i < keyword.length; i++) {
+							if (name.length <= i) {
+								bytes[byte_cnt + i] = 0; // 名前が短い場合は0で埋める
+							}
+							bytes[byte_cnt + i] = name.charCodeAt(i);
+						}
+						break; // 最初の一致のみ処理
+					}
+				}
+				const modified_hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
+				
+				file_content.textContent = `先頭16バイト\n加工前: ${original_hex}\n加工後: ${modified_hex}`;
+
+				// MIMEタイプを指定し、bytesからBlobを作成
+				const blob = new Blob([bytes], { type: 'application/octet-stream' });
+				const url = URL.createObjectURL(blob);
+				a.href = url;
+				a.download = 'modified_hello.exe'; // ダウンロードするファイル名
+				a.click(); // 自動的にダウンロードを開始
+			} catch (e) {
+        	file_content.textContent = 'バイナリ取得失敗: ' + e;
+			} 
 		});
 		
 		// 決定ボタンのクリックイベント
@@ -303,10 +353,8 @@ import TextBox from '../components/textbox.astro';
 				confirmButton.textContent = '送信中...';
 
 				// resultMessageの表示
-				resultMessage.style.display = 'block';
-				resultMessage.className = 'result-message';
-				display_name.textContent = name;
-				display_number.textContent = num;
+				display_result_message(name, num);
+
 
 				// ステータスメッセージを表示
 				statusMessage.style.display = 'block';
@@ -336,7 +384,6 @@ import TextBox from '../components/textbox.astro';
 				nameInput.value = '';
 				numberInput.value = '';
                 
-				// ボタンを有効化
 				confirmButton.textContent = '決定';
 			}
 		});
