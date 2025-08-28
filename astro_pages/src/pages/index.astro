@@ -43,9 +43,6 @@ import SerialApi from '../components/serial_api.astro';
 		</span>
 
 		<div class="button-container">
-			<button id="binary_download_button" class="binary-download-button">
-				バイナリ取得 
-			</button>
 			<button id="binary_modify_button" class="binary-modify-button" disabled>
 				バイナリ加工
 			</button>
@@ -175,7 +172,6 @@ import SerialApi from '../components/serial_api.astro';
 		const pass_input = document.getElementById('pass') as HTMLInputElement;
 		const url_input = document.getElementById('input_url') as HTMLInputElement;
 		const binary_modify_button = document.getElementById('binary_modify_button') as HTMLButtonElement;
-		const binary_download_button = document.getElementById('binary_download_button') as HTMLButtonElement;
 		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
 		const result_text = document.getElementById('result_text') as HTMLElement;
 		const url_error = document.getElementById('url_error') as HTMLElement;
@@ -326,24 +322,6 @@ import SerialApi from '../components/serial_api.astro';
 
 		url_input.addEventListener('blur', handleUrlInputEvent);
 		url_input.addEventListener('input', handleUrlInputEvent);
-
-		// バイナリ取得ボタンのクリックイベント
-		binary_download_button.addEventListener('click', async function() {
-			try {
-				const bainary_file = await fetch('/test_pages/firmware.bin');
-				const arrayBuffer = await bainary_file.arrayBuffer();
-				const bytes = new Uint8Array(arrayBuffer);
-
-				// MIMEタイプを指定し、bytesからBlobを作成
-				const blob = new Blob([bytes], { type: 'application/octet-stream' });
-				const url = URL.createObjectURL(blob);
-
-				click_download(url);
-				URL.revokeObjectURL(url);
-			} catch (e) {
-        	result_text.textContent = 'バイナリ取得失敗: ' + e;
-			} 
-		});
 
 		// バイナリ加工ボタンのクリックイベント
 		binary_modify_button.addEventListener('click', async function() {
