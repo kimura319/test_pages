@@ -5,6 +5,8 @@ interface Props {
   type?: "text" | "email" | "password" | "number" | "tel" | "url" | "search";
   id?: string;
   name?: string;
+  pattern?: string;
+  maxlength?: number;
   required?: boolean;
 }
 
@@ -14,7 +16,9 @@ const {
   type = "text", 
   required = false, 
   id, 
-  name 
+  name,
+  pattern,
+  maxlength
 } = Astro.props;
 ---
 
@@ -24,6 +28,8 @@ const {
     type={type}
     id={id}
     name={name}
+    pattern={pattern}
+    maxlength={maxlength}
     placeholder={placeholder}
     required={required}
     class="textbox-input"

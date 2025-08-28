@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import TextBox from '../components/textbox.astro';
-
+import SerialApi from '../components/serial_api.astro';
 ---
 
 <Layout>
@@ -9,49 +9,58 @@ import TextBox from '../components/textbox.astro';
 		<h2>pagesのデモ</h2>
 		
 		<TextBox 
-			label="お名前" 
-			placeholder="山田太郎" 
-			type = "text"
-			id="name" 
-			name="name" 
+			label="SSID" 
+			placeholder="ssid_example" 
+			type="text"
+			id="ssid" 
+			name="ssid" 
+			maxlength={32}
 			required={true}
 		/>
 
 		<TextBox 
-			label="数値" 
-			placeholder="12345" 
-			type = "number"
-			id="num" 
-			name="num" 
+			label="パスワード" 
+			placeholder="absd12345" 
+			type="password"
+			id="pass" 
+			name="pass" 
+			maxlength={64}
 			required={true}
 		/>
 
+		<TextBox 
+			label="webhook URL" 
+			placeholder="https://example.com/webhook" 
+			type="url"
+			id="input_url" 
+			name="input_url" 
+			pattern="https://.*"
+			maxlength={300}
+			required={true}
+		/>
+		<span id="url_error" style="color:#ef2222; display:none; font-size:14px;">
+    		URLはhttps://から始まる必要があります
+		</span>
+
 		<div class="button-container">
-			<button id="confirmButton" class="confirm-button" disabled>
-				決定
-			</button>
-			<button id="fetch_contents_button" class="fetch-contents-button">
-				コンテンツ取得
-			</button>
-			<button id="binary_download_button" class="binary-download-button" disabled>
+			<button id="binary_download_button" class="binary-download-button">
 				バイナリ取得 
+			</button>
+			<button id="binary_modify_button" class="binary-modify-button" disabled>
+				バイナリ加工
 			</button>
 		</div>
 
-		<a id="download"></a>ダウンロード
-
 		<div id="resultMessage" class="result-message" style="display: none;">
-			<p>こんにちは、<span id="display_name"></span>さん！</p>
-			<p>数値は<span id="display_number"></span>です！</p>
+			<p id="result_text"></p>
 		</div>
 
 		<div id="statusMessage" class="status-message" style="display: none;">
 			<p id="statusText"></p>
 		</div>
-
-		<pre id="fileContent" class="file-content"></pre>
-
 	</div>
+
+	<SerialApi />
 </Layout>
 
 <style>
@@ -77,42 +86,20 @@ import TextBox from '../components/textbox.astro';
 		margin-bottom: 20px;
 	}
 
-	.confirm-button {
-		padding: 12px 24px;
-		background-color: #FF7E33;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 16px;
-		font-weight: bold;
-		cursor: pointer;
-		transition: background-color 0.3s ease;
-		min-width: 120px;
-	}
-
-	.confirm-button:hover:not(:disabled) {
-		background-color: #e6691a;
-	}
-
-	.confirm-button:disabled {
-		background-color: #9ca3af;
-		cursor: not-allowed;
-	}
-
-	.fetch-contents-button {
-		padding: 12px 24px;
-		background-color: #FF7E33;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 16px;
-		font-weight: bold;
-		cursor: pointer;
-		transition: background-color 0.3s ease;
-		min-width: 120px;
-	}
-
 	.binary-download-button {
+		padding: 12px 24px;
+		background-color: #66cc73;
+		color: white;
+		border: none;
+		border-radius: 8px;
+		font-size: 16px;
+		font-weight: bold;
+		cursor: pointer;
+		transition: background-color 0.3s ease;
+		min-width: 120px;
+	}
+
+	.binary-modify-button {
 		padding: 12px 24px;
 		background-color: #8e6eff;
 		color: white;
@@ -125,11 +112,10 @@ import TextBox from '../components/textbox.astro';
 		min-width: 120px;
 	}
 
-	.binary-download-button:disabled {
+	.binary-modify-button:disabled {
 		background-color: #9ca3af;
 		cursor: not-allowed;
 	}
-
 	.result-message {
 		text-align: center;
 		padding: 15px;
@@ -183,215 +169,239 @@ import TextBox from '../components/textbox.astro';
 </style>
 
 <script>
-	import { Octokit } from "@octokit/rest";
-
-	// GitHub Actionsに送信する関数
-	async function sendToGitHubActions(username: string, number: string): Promise<void> {
-		const owner = 'kimura319';  // GitHubユーザー名
-		const repo = 'test_pages';  // リポジトリ名
-		
-		// デモ用の設定（実際のトークンは入力してください）
-		const token = prompt('GitHub Personal Access Tokenを入力してください:');
-		
-		if (!token) {
-			throw new Error('GitHub tokenが設定されていません');
-		}
-
-		// Repository Dispatch APIエンドポイント
-		const url = `https://api.github.com/repos/${owner}/${repo}/actions/workflows/cpp.yaml/dispatches`;
-
-		const response = await fetch(url, {
-			method: 'POST',
-			headers: {
-				'Accept': 'application/vnd.github+json',
-				'Authorization': `Bearer ${token}`,
-				'X-GitHub-Api-Version': '2022-11-28'
-			},
-			body: JSON.stringify({
-				ref: 'main',
-				inputs: {
-					name: username,
-					number: number
-				}
-			})
-		});
-
-		if (!response.ok) {
-			// レスポンス詳細も取得
-			let errorDetail = '';
-			try {
-				errorDetail = await response.text();
-			} catch {}
-			throw new Error(`GitHub API Error: ${response.status} ${response.statusText}\n${errorDetail}`);
-		}
-	}
-
 	// DOMが読み込まれた後に実行
 	document.addEventListener('DOMContentLoaded', function() {
-		const nameInput = document.getElementById('name') as HTMLInputElement;
-		const numberInput = document.getElementById('num') as HTMLInputElement;
-		const confirmButton = document.getElementById('confirmButton') as HTMLButtonElement;
-		const fetch_contents_button = document.getElementById('fetch_contents_button') as HTMLButtonElement;
+		const ssid_input = document.getElementById('ssid') as HTMLInputElement;
+		const pass_input = document.getElementById('pass') as HTMLInputElement;
+		const url_input = document.getElementById('input_url') as HTMLInputElement;
+		const binary_modify_button = document.getElementById('binary_modify_button') as HTMLButtonElement;
 		const binary_download_button = document.getElementById('binary_download_button') as HTMLButtonElement;
-
 		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
-		const display_name = document.getElementById('display_name') as HTMLElement;
-		const display_number = document.getElementById('display_number') as HTMLElement;
-		const statusMessage = document.getElementById('statusMessage') as HTMLElement;
-		const statusText = document.getElementById('statusText') as HTMLElement;
-		const file_content = document.getElementById('fileContent') as HTMLElement;
+		const result_text = document.getElementById('result_text') as HTMLElement;
+		const url_error = document.getElementById('url_error') as HTMLElement;
 
-		// ダウンロードリンクの設定
-		const a = document.getElementById('download') as HTMLAnchorElement;
+		const connectButton = document.getElementById('connectButton') as HTMLButtonElement;
+		const disconnectButton = document.getElementById('disconnectButton') as HTMLButtonElement;
+		const statusElement = document.getElementById('status') as HTMLSpanElement;
 
-		if (!nameInput || !confirmButton || !resultMessage || !display_name || !display_number || !statusMessage || !statusText) {
+		// Web Serial API ============================================
+		let port: SerialPort | null = null;
+		let writer: WritableStreamDefaultWriter | null = null;
+
+		// シリアル接続
+		connectButton?.addEventListener('click', async () => {
+			try {
+				// シリアルポートの選択
+				port = await (navigator as any).serial.requestPort();
+				
+				// ポートを開く（ボーレート等の設定）
+				await port.open({ 
+					baudRate: 115200,
+					dataBits: 8,
+					stopBits: 1,
+					parity: 'none'
+				});
+
+				if (!writer && port) {
+					writer = port.writable.getWriter();
+				}
+
+				if (statusElement) {
+					statusElement.textContent = '接続済み';
+					statusElement.style.color = '#34d399';
+				}
+				if (connectButton) connectButton.disabled = true;
+				if (disconnectButton) disconnectButton.disabled = false;
+
+			} catch (error) {
+				console.error('接続エラー:', error);
+			}
+		});
+
+		// シリアル切断
+		disconnectButton?.addEventListener('click', async () => {
+			try {
+				if (port) {
+					await port.close();
+				}
+				
+				port = null;
+				writer = null;
+
+				if (statusElement) {
+					statusElement.textContent = '未接続';
+					statusElement.style.color = '#6b7280';
+				}
+				if (connectButton) connectButton.disabled = false;
+				if (disconnectButton) disconnectButton.disabled = true;
+
+			} catch (error) {
+				console.error('切断エラー:', error);
+			}
+		});
+
+		// Web Serial API の対応チェック
+		if (!('serial' in navigator)) {
+			if (statusElement) {
+				statusElement.textContent = 'Web Serial API未対応';
+				statusElement.style.color = '#f87171';
+			}
+			if (connectButton) connectButton.disabled = true;
+		}
+		// =============================================================
+
+		if (!ssid_input || !pass_input || !url_input || !binary_modify_button || !resultMessage || !result_text) {
 			console.error('Required elements not found');
 			return;
 		}
 
+		// 名前入力フィールドの変更を監視
+		ssid_input.addEventListener('input', updateButtonState);
+		pass_input.addEventListener('input', updateButtonState);
+		url_input.addEventListener('input', updateButtonState);
+
 		// 入力値の両方がある場合のみボタンを有効化
         function updateButtonState() {
-            const name = nameInput.value.trim();
-            const num = numberInput.value.trim();
-            const enabled = name.length > 0 && num.length > 0;
-            confirmButton.disabled = !enabled;
-            binary_download_button.disabled = !enabled;
+            const user_ssid = ssid_input.value.trim();
+			const user_pass = pass_input.value.trim();
+			const user_url = url_input.value.trim();
+			const isUrlValid = /^https:\/\/.+/.test(user_url);
+            const enabled = user_ssid.length > 0 && user_pass.length > 0 && user_url.length > 0 && isUrlValid;
+            binary_modify_button.disabled = !enabled;
         }
 
-		function display_result_message(name: string, num: string) {
-				resultMessage.style.display = 'block';
-				resultMessage.className = 'result-message';
-				display_name.textContent = name;
-				display_number.textContent = num;
+		// 結果メッセージを表示
+		function display_result_message() {
+			resultMessage.style.display = 'block';
+			resultMessage.className = 'result-message';
+			result_text.textContent = '入力完了！';
         }
 
-		// 名前入力フィールドの変更を監視
-		nameInput.addEventListener('input', updateButtonState);
-		numberInput.addEventListener('input', updateButtonState);
+		// ファイルをダウンロード
+		function click_download(url: string) {
+			const a = document.createElement('a');
+			document.body.appendChild(a); // Firefox対応
+			a.href = url;
+			a.download = 'firmware.bin'; // ダウンロードするファイル名
+			a.click(); // 自動的にダウンロードを開始
+        }
 
-		// githubのレポジトリからファイルを取得
-		fetch_contents_button.addEventListener('click', async function() {
-			const owner = 'kimura319';
-			const repo = 'test_pages';
-			const path = 'src/hello.cpp'; // 取得したいファイルパス
-			const url = `https://api.github.com/repos/${owner}/${repo}/contents/${path}`;
-			
-			const response = await fetch(url);
-			if (!response.ok) {
-				file_content.textContent = '取得失敗: ' + response.statusText;
+		// バイナリファイルを加工
+		function modify_binary(bytes: Uint8Array, keyword: string, replace_len: number, name: string) {
+			const keyword_bytes = Array.from(keyword).map(b => b.charCodeAt(0));
+			for (let byte_cnt = 0; byte_cnt < bytes.length - replace_len ; byte_cnt++) {
+				if (keyword_bytes.every((char_byte, index) => bytes[byte_cnt + index] === char_byte)) {
+					for (let i = 0; i < replace_len; i++) {
+						if (name.length <= i) {
+							bytes[byte_cnt + i] = 0; // 名前が短い場合は0で埋める
+						}
+						bytes[byte_cnt + i] = name.charCodeAt(i);
+					}
+					break; // 最初の一致のみ処理
+				}
+			}
+		}
+
+		// url の入力のバリデーション
+		function handleUrlInputEvent(event: any) {
+			const val = url_input.value.trim();
+		    const isValid = /^https:\/\/.+/.test(val) || val.length === 0;
+
+			if (event.type === 'blur' && !isValid) {
+				// focusが外れた際、「https://」が無い場合はエラー表示
+			    url_error.style.display = 'inline';
+			    url_input.style.borderColor = '#ef2222';
+				url_input.style.backgroundColor = '#efbbbb';
+			} else if (event.type === 'input' && isValid) {
+				// 入力に「https://」がある場合は通常表示
+				url_error.style.display = 'none';
+				url_input.style.borderColor = '';
+				url_input.style.backgroundColor = '';
+			} else {
+				// それ以外のケースでは何もしない
 				return;
 			}
-			const data = await response.json();
-			// base64デコード
-			const content = atob(data.content.replace(/\n/g, ''));
-			// 正規表現によって、複数の "hello" を 「こんにちわ」に置換
-			file_content.textContent = content.replace(/hello/g, 'こんにちは');
-		});
+			updateButtonState();
+		};
+
+		url_input.addEventListener('blur', handleUrlInputEvent);
+		url_input.addEventListener('input', handleUrlInputEvent);
 
 		// バイナリ取得ボタンのクリックイベント
 		binary_download_button.addEventListener('click', async function() {
-			const name = nameInput.value.trim();
-			const num = numberInput.value.trim();
-
-			if(name && num) {
-				// 入力フィールドをクリア
-				nameInput.value = '';
-				numberInput.value = '';
-				// ボタンを無効化
-				updateButtonState();
-
-				// resultMessageの表示
-				display_result_message(name, num);
-			}
-
 			try {
-				const bainary_file = await fetch('/test_pages/firmware.bin'); // 取得したいバイナリファイル名
+				const bainary_file = await fetch('/test_pages/firmware.bin');
 				const arrayBuffer = await bainary_file.arrayBuffer();
-
-				// arrayBuffer の中身にアクセスするため、Uint8Arrayを使用
 				const bytes = new Uint8Array(arrayBuffer);
-
-				// 加工前のバイナリデータを16進数表記に変換（もっと処理を細かく分割したい）
-				const original_hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-
-				const keyword = "dummy_ssid";
-				const keyword_byte = Array.from(keyword).map(b => b.charCodeAt(0));
-				
-				for (let byte_cnt = 0; byte_cnt < bytes.length - keyword.length ; byte_cnt++) {
-					if (keyword_byte.every((char_byte, index) => bytes[byte_cnt + index] === char_byte)) {
-						for (let i = 0; i < keyword.length; i++) {
-							if (name.length <= i) {
-								bytes[byte_cnt + i] = 0; // 名前が短い場合は0で埋める
-							}
-							bytes[byte_cnt + i] = name.charCodeAt(i);
-						}
-						break; // 最初の一致のみ処理
-					}
-				}
-				const modified_hex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join(' ');
-				
-				file_content.textContent = `先頭16バイト\n加工前: ${original_hex}\n加工後: ${modified_hex}`;
 
 				// MIMEタイプを指定し、bytesからBlobを作成
 				const blob = new Blob([bytes], { type: 'application/octet-stream' });
 				const url = URL.createObjectURL(blob);
-				a.href = url;
-				a.download = 'modified_hello.exe'; // ダウンロードするファイル名
-				a.click(); // 自動的にダウンロードを開始
+
+				click_download(url);
+				URL.revokeObjectURL(url);
 			} catch (e) {
-        	file_content.textContent = 'バイナリ取得失敗: ' + e;
+        	result_text.textContent = 'バイナリ取得失敗: ' + e;
 			} 
 		});
-		
-		// 決定ボタンのクリックイベント
-		confirmButton.addEventListener('click', async function() {
-			const name = nameInput.value.trim();
-			const num = numberInput.value.trim();
-			if (name && num) {
-				// ボタンを無効化
-				confirmButton.disabled = true;
-				confirmButton.textContent = '送信中...';
 
-				// resultMessageの表示
-				display_result_message(name, num);
+		// バイナリ加工ボタンのクリックイベント
+		binary_modify_button.addEventListener('click', async function() {
+			const user_ssid = ssid_input.value.trim();
+			const user_pass = pass_input.value.trim();
+			const user_url = url_input.value.trim();
 
-
-				// ステータスメッセージを表示
-				statusMessage.style.display = 'block';
-				statusMessage.className = 'status-message loading';
-				statusText.textContent = 'GitHub Actionsに送信しています...';
+			if(user_ssid && user_pass && user_url) {
+				display_result_message();	// resultMessageの表示
 			}
 
 			try {
-				// GitHub Actionsに送信
-				await sendToGitHubActions(name, num);    
-				statusMessage.className = 'status-message success';
-				statusText.textContent = 'GitHub Actionsに正常に送信されました！Actionsタブでワークフローをご確認ください。';
+				// 加工するバイナリファイル
+				const bainary_file = await fetch('/test_pages/firmware.bin');
+				const arrayBuffer = await bainary_file.arrayBuffer();
+				const bytes = new Uint8Array(arrayBuffer);
 
-			} catch (error) {
-				console.error('送信エラー:', error);
-				let errorMessage = '不明なエラーが発生しました';
-				if (error instanceof Error) {
-					errorMessage = error.message;
-				} else if (typeof error === 'string') {
-					errorMessage = error;
+				// バイナリファイルを加工
+				modify_binary(bytes, 'FiBS_temporary_ssid_2025', 33, user_ssid);
+				modify_binary(bytes, 'FiBS_temporary_password_2025', 64, user_pass);
+				modify_binary(bytes, 'FiBS_temporary_url_2025', 300, user_url);
+
+				// MIMEタイプを指定し、bytesからBlobを作成
+				const blob = new Blob([bytes], { type: 'application/octet-stream' });
+				const url = URL.createObjectURL(blob);
+
+				click_download(url);
+				URL.revokeObjectURL(url);
+
+				// シリアル通信でバイナリ送信
+				if (!writer) {
+					alert('シリアル接続されていません。先に「シリアル接続」ボタンを押してください。');
+					return;
 				}
+				await writer.write(new Uint8Array(arrayBuffer));
+            	alert('バイナリ送信完了');
+			} catch (e) {
+        	result_text.textContent = 'バイナリ取得失敗: ' + e;
+			} 
+		});
 
-				statusMessage.className = 'status-message error';
-				statusText.textContent = `送信に失敗しました: ${errorMessage}`;
-			} finally {
-				// 入力フィールドをクリア
-				nameInput.value = '';
-				numberInput.value = '';
-                
-				confirmButton.textContent = '決定';
+		// Enterキーで次のフォーム入力
+		ssid_input.addEventListener('keypress', function(event) {
+			if (event.key === 'Enter') {
+				pass_input.focus();
+			}
+		});
+		
+		pass_input.addEventListener('keypress', function(event) {
+			if (event.key === 'Enter') {
+				url_input.focus();
 			}
 		});
 
 		// Enterキーでも決定できるようにする
-		nameInput.addEventListener('keypress', function(event) {
-			if (event.key === 'Enter' && !confirmButton.disabled) {
-				confirmButton.click();
+		url_input.addEventListener('keypress', function(event) {
+			if (event.key === 'Enter' && !binary_modify_button.disabled) {
+				binary_modify_button.click();
 			}
 		});
 	});
