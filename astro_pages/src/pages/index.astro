@@ -5,64 +5,78 @@ import SerialApi from '../components/serial_api.astro';
 ---
 
 <Layout>
-	<div class="demo-container">
-		<h2>pagesのデモ</h2>
-		
-		<TextBox 
-			label="SSID" 
-			placeholder="ssid_example" 
-			type="text"
-			id="ssid" 
-			name="ssid" 
-			maxlength={32}
-			required={true}
-		/>
+	<div class="main-flex-container">
 
-		<TextBox 
-			label="パスワード" 
-			placeholder="absd12345" 
-			type="password"
-			id="pass" 
-			name="pass" 
-			maxlength={64}
-			required={true}
-		/>
+		<div class="demo-container">
+			<h2>pagesのデモ</h2>
+			
+			<TextBox 
+				label="SSID" 
+				placeholder="ssid_example" 
+				type="text"
+				id="ssid" 
+				name="ssid" 
+				maxlength={32}
+				required={true}
+			/>
 
-		<TextBox 
-			label="webhook URL" 
-			placeholder="https://example.com/webhook" 
-			type="url"
-			id="input_url" 
-			name="input_url" 
-			pattern="https://.*"
-			maxlength={300}
-			required={true}
-		/>
-		<span id="url_error" style="color:#ef2222; display:none; font-size:14px;">
-    		URLはhttps://から始まる必要があります
-		</span>
+			<TextBox 
+				label="パスワード" 
+				placeholder="absd12345" 
+				type="password"
+				id="pass" 
+				name="pass" 
+				maxlength={64}
+				required={true}
+			/>
 
-		<div class="button-container">
-			<button id="binary_modify_button" class="binary-modify-button" disabled>
-				バイナリ加工
-			</button>
+			<TextBox 
+				label="webhook URL" 
+				placeholder="https://example.com/webhook" 
+				type="url"
+				id="input_url" 
+				name="input_url" 
+				pattern="https://.*"
+				maxlength={300}
+				required={true}
+			/>
+			<span id="url_error" style="color:#ef2222; display:none; font-size:14px;">
+				URLはhttps://から始まる必要があります
+			</span>
+
+			<div class="button-container">
+				<button id="binary_modify_button" class="binary-modify-button" disabled>
+					バイナリ加工
+				</button>
+			</div>
+
+			<div id="resultMessage" class="result-message" style="display: none;">
+				<p id="result_text"></p>
+			</div>
+
+			<div id="statusMessage" class="status-message" style="display: none;">
+				<p id="statusText"></p>
+			</div>
 		</div>
-
-		<div id="resultMessage" class="result-message" style="display: none;">
-			<p id="result_text"></p>
-		</div>
-
-		<div id="statusMessage" class="status-message" style="display: none;">
-			<p id="statusText"></p>
-		</div>
-	</div>
-
+	
 	<SerialApi />
+
+	</div>
 </Layout>
 
 <style>
+
+	.main-flex-container {
+        display: flex;
+        gap: 40px; /* コンテナ間の余白 */
+        justify-content: center;
+        align-items: center;
+		max-width: 800px;
+		margin: 0 auto;
+    }
 	.demo-container {
 		max-width: 600px;
+		min-width: 400px;
 		margin: 150px auto;
 		padding: 0 20px;
 	}
@@ -217,13 +231,15 @@ import SerialApi from '../components/serial_api.astro';
 		// シリアル切断
 		disconnectButton?.addEventListener('click', async () => {
 			try {
+				if (writer) {
+					writer.releaseLock();
+					writer = null;
+				}
 				if (port) {
 					await port.close();
+					port = null;
 				}
 				
-				port = null;
-				writer = null;
-
 				if (statusElement) {
 					statusElement.textContent = '未接続';
 					statusElement.style.color = '#6b7280';
@@ -267,10 +283,10 @@ import SerialApi from '../components/serial_api.astro';
         }
 
 		// 結果メッセージを表示
-		function display_result_message() {
+		function display_result_message(message:string) {
 			resultMessage.style.display = 'block';
 			resultMessage.className = 'result-message';
-			result_text.textContent = '入力完了！';
+			result_text.textContent = message;
         }
 
 		// ファイルをダウンロード
@@ -330,7 +346,7 @@ import SerialApi from '../components/serial_api.astro';
 			const user_url = url_input.value.trim();
 
 			if(user_ssid && user_pass && user_url) {
-				display_result_message();	// resultMessageの表示
+				display_result_message('入力完了');	// resultMessageの表示
 			}
 
 			try {
@@ -356,7 +372,7 @@ import SerialApi from '../components/serial_api.astro';
 					alert('シリアル接続されていません。先に「シリアル接続」ボタンを押してください。');
 					return;
 				}
-				await writer.write(new Uint8Array(arrayBuffer));
+				await writer.write(bytes);
             	alert('バイナリ送信完了');
 			} catch (e) {
         	result_text.textContent = 'バイナリ取得失敗: ' + e;
