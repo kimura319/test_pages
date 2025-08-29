@@ -2,5 +2,8 @@
     "C_Cpp.default.compilerPath": "C:\\mingw64\\bin\\gcc.exe",
     "C_Cpp_Runner.cCompilerPath": "C:\\mingw64\\bin\\gcc.exe",
     "C_Cpp_Runner.cppCompilerPath": "C:\\mingw64\\bin\\g++.exe",
-    "C_Cpp_Runner.debuggerPath": "C:\\mingw64\\bin\\gdb.exe"
+    "C_Cpp_Runner.debuggerPath": "C:\\mingw64\\bin\\gdb.exe",
+    "files.associations": {
+        "iostream": "cpp"
+    }
 }
