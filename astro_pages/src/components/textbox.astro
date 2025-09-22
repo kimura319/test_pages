@@ -38,13 +38,13 @@ const {
 
 <style>
   .textbox-container {
-    margin-bottom: 20px;
+    margin-bottom: 5px;
   }
 
   .textbox-label {
     display: block;
-    margin-bottom: 8px;
-    color: #2A233E;
+    margin-bottom: 5px;
+    color: #3b3157;
     font-size: 16px;
     font-weight: bold;
   }
@@ -64,7 +64,7 @@ const {
 
   .textbox-input:focus {
     outline: none;
-    border-color: #FF7E33;
+    border-color: #8e6eff;
     box-shadow: 0 0 0 3px rgba(255, 126, 51, 0.1);
   }
 
@@ -73,7 +73,7 @@ const {
   }
 
   .textbox-input:hover {
-    border-color: #d1d5db;
+    border-color: #ab94ff;
   }
 
   .textbox-input:disabled {
@@ -82,4 +82,16 @@ const {
     color: #6b7280;
     cursor: not-allowed;
   }
+
+  .textbox-input:read-only {
+        background-color: #f9fafb;
+        border-color: #e5e7eb;
+        color: #717986;
+        font-weight: 600;
+        font-family: 'Noto Sans', 'Arial', sans-serif;
+        opacity: 1;
+        transition: background 0.2s, border 0.2s;
+        cursor: not-allowed;
+  }
+
 </style>

@@ -1,87 +1,424 @@
 <!-- Web Serial API セクション -->
-<div class="serial-container">
-    <h2>Web Serial API</h2>
-    
-    <div class="serial-controls">
-        <button id="connectButton" class="serial-button">シリアル接続</button>
-        <button id="disconnectButton" class="serial-button" disabled>切断</button>
-        <button id="sendButton" class="serial-button">送信</button>
-    </div>
-    
-    <div class="serial-status">
-        <p>ステータス: <span id="status">未接続</span></p>
-    </div>
+<div class="serial-buttons-container">
+	<button id="connect_button" type="button" class="serial-button">接続</button>
+	<button id="disconnect_button" type="button" class="serial-button" disabled>切断</button>
+	<span id="serial_status" class="serial-status">未接続</span>
+</div>
+<button id="flash_button" type="button" class="flash-button" disabled>書き込み開始</button>
+<div class="progress-bar-container">
+	<div id="progress_bar" class="progress-bar">
+		<div id="progress_indicater" class="progress-indicater"></div>
+	</div>
 </div>
 
 <style>
-    .serial-container {
-		max-width: 800px;
-		min-width: 300px;
-		margin: 200px auto;
-		padding: 20px;
-		border: 2px solid #e1e5e9;
-		border-radius: 12px;
-		background-color: #ffffff;
+	.serial-buttons-container {
+		display: flex;
+		gap: 16px;
+		align-items: center;
+		margin-bottom: 8px;
 	}
-
-	.serial-container h2 {
-		color: #2A233E;
-		font-size: 24px;
-		font-weight: bold;
-		margin-bottom: 30px;
-		text-align: center;
+	.serial-button {
+		padding: 12px 28px;
+		background: #0078d4;
+		color: #fff;
+		border: none;
+		border-radius: 24px;
+		font-size: 16px;
+		font-weight: 600;
+		cursor: pointer;
+		box-shadow: 0 2px 8px #00000014;
+		transition: background 0.2s, box-shadow 0.2s;
 	}
-
-	.serial-container h3 {
-		color: #2A233E;
+	.serial-button:hover {
+		background-color: #342bb3;
+		box-shadow: 0 4px 16px #0000001f;
+	}
+	.serial-button:disabled {
+		background: #bdbdbd;
+		cursor: not-allowed;
+		box-shadow: none;
+	}
+	.serial-status {
+		font-size: 15px;
+		font-weight: 500;
+		color: #6b7280;
+		margin-left: 8px;
+	}
+	.flash-button {
+		width: 100%;
+		max-width: 300px;
+		margin: 24px auto 0 auto;
+		display: block;
+		padding: 16px 0;
+		background: #0078d4;
+		color: #fff;
+		border: none;
+		border-radius: 24px;
 		font-size: 18px;
 		font-weight: bold;
-		margin: 20px 0 10px 0;
-	}
-
-	.serial-controls {
-		display: flex;
-		gap: 10px;
-		margin-bottom: 20px;
-		justify-content: center;
-	}
-
-	.serial-button {
-		padding: 10px 20px;
-		background-color: #FF7E33;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 16px;
-		font-weight: bold;
 		cursor: pointer;
-		transition: background-color 0.3s ease;
+		box-shadow: 0 2px 8px #00000014;
+		transition: background 0.3s, box-shadow 0.2s;
+		min-width: 160px;
+		min-height: 48px;
 	}
-
-	.serial-button:hover:not(:disabled) {
-		background-color: #e6691a;
+	.flash-button:hover:not(:disabled) {
+		background-color: #342bb3;
+		box-shadow: 0 4px 16px #0000001f;
 	}
-
-	.serial-button:disabled {
-		background-color: #9ca3af;
+	.flash-button:disabled {
+		background: #9ca3af;
 		cursor: not-allowed;
+		box-shadow: none;
 	}
-
-	.serial-status {
-		text-align: center;
-		margin-bottom: 20px;
-		padding: 10px;
-		background-color: #f9fafb;
-		border-radius: 8px;
+	.progress-bar-container {
+		width: 100%;
+		margin: 24px 0 0 0;
+		display: flex;
+		justify-content: center;
+		align-items: center;
 	}
-
-	.serial-status p {
-		margin: 0;
-		color: #2A233E;
-		font-weight: bold;
+	.progress-bar {
+		position: relative;
+		border-radius: 16px;
+		overflow: hidden;
+		width: 100%;
+		max-width: 320px;
+		height: 10px;
+		border: 2px solid #cccccc;
+		display: flex;
+		align-items: center;
+		background: #f3f3f3;
 	}
-
-	.serial-status span {
-		color: #FF7E33;
+	.progress-indicater {
+		position: absolute;
+		left: 0;
+		top: 0;
+		height: 100%;
+		width: 0;
+		background: linear-gradient(90deg, #9eacff 0%, #e9ffae 100%);
+		transition: width 0.2s;
+		z-index: 1;
 	}
 </style>
+
+<script>
+	import { ESPLoader, Transport } from "esptool-js";
+	import type { FlashOptions, LoaderOptions} from "esptool-js";
+	import CryptoJS from "crypto-js";
+
+		// DOMが読み込まれた後に実行
+	document.addEventListener('DOMContentLoaded', function() {
+		// 入力
+		const ssid_input = document.getElementById('ssid_input') as HTMLInputElement;
+		const pass_input = document.getElementById('password_input') as HTMLInputElement;
+		const url_input = document.getElementById('url_input') as HTMLInputElement;
+		// トグル
+        const toggle_line = document.getElementById('toggle_line') as HTMLInputElement;
+		const token_input = document.getElementById('token') as HTMLInputElement;
+		// 書き込みボタン
+		const flash_button = document.getElementById('flash_button') as HTMLButtonElement;
+		// シリアル接続ボタン
+		const connect_button = document.getElementById('connect_button') as HTMLButtonElement;
+		const disconnect_button = document.getElementById('disconnect_button') as HTMLButtonElement;
+		const statusElement = document.getElementById('serial_status') as HTMLSpanElement;
+		// 進捗バー
+		const progress_indicater = document.getElementById('progress_indicater') as HTMLProgressElement;
+
+		let port = null;		
+		let transport: Transport | null = null;
+		let esploader: ESPLoader | null = null;
+		let chip: string | null = null;
+
+		function cleanUp() {
+			port = null;
+  			transport = null;
+  			chip = null;
+		}
+
+		// シリアル接続
+		connect_button?.addEventListener('click', async () => {
+			try {
+				// シリアルポートの選択
+				port = await (navigator as any).serial.requestPort();
+				
+				// esptoolのポート接続
+				transport = new Transport(port, true);
+				const flashOptions = {
+					transport,
+					baudrate: 460800,
+					debugLogging: false,
+				} as LoaderOptions;
+			    esploader = new ESPLoader(flashOptions);
+			    chip = await esploader.main();
+    			console.log("Settings done for :" + chip);		// チップ情報の表示
+
+				// 接続成功後のUI更新
+				if (statusElement) {
+					statusElement.textContent = '接続済み';
+					statusElement.style.color = '#4335ff';
+				}
+				if (connect_button) {
+					connect_button.disabled = true;
+				}
+				if (disconnect_button) {
+					disconnect_button.disabled = false;
+				}
+
+			} catch (error) {
+				console.error('接続エラー:', error);
+			}
+		});
+
+		// シリアル切断
+		disconnect_button?.addEventListener('click', async () => {
+			try {
+				if (transport) {
+					await transport.disconnect();
+				}
+				cleanUp();
+
+				// 切断後のUI更新
+				if (statusElement) {
+					statusElement.textContent = '未接続';
+					statusElement.style.color = '#6b7280';
+				}
+				if (connect_button) {
+					connect_button.disabled = false;
+				}
+				if (disconnect_button) {
+					disconnect_button.disabled = true;
+				}
+
+			} catch (error) {
+				console.error('切断エラー:', error);
+			}
+		});
+
+		// Web Serial API の対応チェック
+		if (!('serial' in navigator)) {
+			if (statusElement) {
+				statusElement.textContent = 'Web Serial API未対応';
+				statusElement.style.color = '#f87171';
+			}
+			if (connect_button) connect_button.disabled = true;
+		}
+
+				// 文字列の各バイトの排他的論理和
+		function xor_string(checksum: number, value: string | number) {
+			if (typeof value === 'string') {
+				for (let i = 0; i < value.length; i++) {
+					checksum ^= value.charCodeAt(i);
+				}
+			} else {
+				checksum ^= value;
+			}
+			return checksum;
+		}
+
+		// Uint8Arrayを文字列に変換
+		function binary_to_string(uint8Array: Uint8Array): string {
+			let string_data = '';
+			for (let i = 0; i < uint8Array.length; i++) {
+				string_data += String.fromCharCode(uint8Array[i]);
+			}
+			return string_data;
+		}
+
+		// URLからバイナリファイルを取得し、Uint8Arrayで返す
+		async function fetch_binary(url: string): Promise<Uint8Array> {
+			const binary_file = await fetch(url);
+			const arrayBuffer = await binary_file.arrayBuffer();
+			return new Uint8Array(arrayBuffer);
+		}
+
+		// ファーム書き込み
+		async function flash_firmware(firm_bytes: Uint8Array) {
+			if (!esploader) {
+				alert('シリアル接続されていません。先に「シリアル接続」ボタンを押してください。');
+				return;
+			}
+			// Uint8Arrayを string に変換		
+			const firm_string = binary_to_string(firm_bytes);
+			const bootloader_bytes = await fetch_binary('/test_pages/bootloader.bin');
+			const bootloader_string = binary_to_string(bootloader_bytes);
+			const partition_bytes = await fetch_binary('/test_pages/partitions.bin');
+			const partition_string = binary_to_string(partition_bytes);
+			const app0_bytes = await fetch_binary('/test_pages/boot_app0.bin');
+			const app0_string = binary_to_string(app0_bytes);
+
+			// 書き込みファイルと書き込み先のアドレス
+			const fileArray = [
+				{ data: bootloader_string, address: 0x0000 },      // ブートローダー
+				{ data: partition_string, address: 0x8000 },       // パーティションテーブル
+				{ data: app0_string, address: 0xe000 },            // app0
+				{ data: firm_string, address: 0x10000 }            // アプリケーション
+			];
+
+			try {
+				const progress_bar = document.getElementById('progress_bar') as HTMLElement;
+				const maxWidth = progress_bar.offsetWidth;
+
+				const flashOptions: FlashOptions = {
+					fileArray: fileArray,
+					flashSize: "keep",
+					flashMode: "dio",
+					flashFreq: "80m",
+					eraseAll: false,
+					compress: true,
+					reportProgress: (fileIndex, written, total) => {
+						if (fileIndex === 3) { // アプリケーションの書き込み進捗のみ表示
+							const percent = Math.round((written / total) * 100);
+							progress_indicater.style.width = `${(percent / 100) * maxWidth}px`;
+							flash_button.textContent = `Writing...  ${percent}%`; // 進捗率を文字で表示
+						}
+					},
+					calculateMD5Hash: (image) => CryptoJS.MD5(CryptoJS.enc.Latin1.parse(image)).toString(),
+				} as FlashOptions;
+				
+				// 書き込み処理
+				await esploader.writeFlash(flashOptions);
+				await new Promise(resolve => setTimeout(resolve, 500)); // 500ms待機
+				await esploader.after();
+				flash_button.textContent = "Completed";
+				alert('書き込み完了しました');
+				
+			} catch (e) {
+				console.error(e);
+				const errorMsg = `書き込みエラー: ${e instanceof Error ? e.message : String(e)}`;
+				alert(errorMsg);
+			}
+		}
+
+		// トグル状態に応じてtokenを設定し、入力値を取得する
+		function get_inputs() {
+			const ssid = ssid_input.value.trim();
+			const pass = pass_input.value.trim();
+			const url = url_input.value.trim();
+			const token = toggle_line.checked ? token_input.value.trim() : '';
+			const nortification_mode = get_selected_service();
+			return { ssid, pass, url, token, nortification_mode };
+		}
+
+		// 選択されている radio 要素の value を取得
+		function get_selected_service() {
+			const selected_toggle = document.querySelector('input[name="toggle_input"]:checked') as HTMLInputElement;
+			if (selected_toggle) {
+				return selected_toggle.value;
+			} else {
+				return "0";	 // デフォルト値
+			}
+		}
+
+		// バイナリ内の置換用文字列を入力値で置換
+		function replace_placeholder(bytes: Uint8Array, byte_cnt:number, input_value: string, replace_len: number, key: string) {
+			for (let i = 0; i < replace_len; i++) {
+				// 通知サービスの設定
+				if (key === 'nortification_mode') {
+					bytes[byte_cnt] = parseInt(input_value);
+					break;
+				}
+
+				// その他入力の設定
+				if (input_value.length <= i) {
+					bytes[byte_cnt + i] = 0; // 名前が短い場合は0で埋める
+				}
+				bytes[byte_cnt + i] = input_value.charCodeAt(i);
+			}
+		}
+
+		// バイナリファイルを加工
+		function modify_binary(bytes: Uint8Array, keyword: string, replace_sizes: any, inputs: any) {
+			const keyword_bytes = Array.from(keyword).map(b => b.charCodeAt(0));
+			for (let byte_cnt = 0; byte_cnt < bytes.length - replace_sizes.ssid ; byte_cnt++) {
+				if (keyword_bytes.every((char_byte, index) => bytes[byte_cnt + index] === char_byte)) {
+					for (const key in inputs) {
+						replace_placeholder(bytes, byte_cnt, inputs[key], replace_sizes[key], key);
+						byte_cnt += replace_sizes[key];
+					}
+					break; // 最初の一致のみ処理
+				}
+			}
+		}
+
+		// バイナリ加工ボタンのクリックイベント
+		flash_button.addEventListener('click', async function() {
+			// ファーム内の置換用文字列
+			const placeholders = {
+				ssid: "FiBS_temporary_ssid_2025",
+				pass: "FiBS_temporary_password_2025",
+				url: "FiBS_temporary_url_2025",
+				token: "FiBS_temporary_token_2025",
+			}
+			const replace_sizes = {
+				ssid: 33,
+				pass: 65,
+				url: 301,
+				token: 65,
+				nortification_mode: 1
+			}
+
+			// トグルの状態に応じて入力を変更
+			const inputs = get_inputs();
+
+			try {
+				// 加工するバイナリファイル
+				let firm_bytes = await fetch_binary('/test_pages/firmware.bin');
+
+				// バイナリファイルを加工
+				modify_binary(firm_bytes, placeholders.ssid, replace_sizes, inputs);
+
+				// ハッシュ値の削除
+				const hash_append_flag_offset = 0x17
+				if (firm_bytes[hash_append_flag_offset] == 0x01) {
+					firm_bytes[hash_append_flag_offset] = 0x00;
+					firm_bytes = firm_bytes.slice(0, firm_bytes.length - 32); // 変更を反映
+				}
+
+				// チェックサムの計算
+				// 　1. 入力と置換用文字列の各バイトの排他的論理和を取る
+				// 　2. 1.の値とバイナリファイル末尾の排他的論理和を取る
+				let string_checksum = 0x00;
+				Object.values(placeholders).forEach(string => {
+					string_checksum = xor_string(string_checksum, string);
+				});
+				Object.values(inputs).forEach(string => {
+					if (string === inputs['nortification_mode']) {
+						string_checksum ^= parseInt(string); 	//  通知サービスは数値として計算 
+					} else {
+						string_checksum = xor_string(string_checksum, string);
+					}
+				});
+				firm_bytes[firm_bytes.length - 1] ^= string_checksum;
+
+				// シリアル通信でバイナリ送信
+				await flash_firmware(firm_bytes);
+
+
+				// ファイルをダウンロード
+				function click_download(url: string) {
+					const a = document.createElement('a');
+					document.body.appendChild(a); // Firefox対応
+					a.href = url;
+					a.download = 'firmware.bin'; // ダウンロードするファイル名
+					a.click(); // 自動的にダウンロードを開始
+				}
+
+				// MIMEタイプを指定し、bytesからBlobを作成
+				const blob = new Blob([firm_bytes], { type: 'application/octet-stream' });
+				const url = URL.createObjectURL(blob);
+
+				click_download(url);
+				URL.revokeObjectURL(url);
+
+				
+			} catch (e) {
+				console.error(e);
+				const errorMsg = `ファームウェアが異常です: ${e instanceof Error ? e.message : String(e)}`;
+				alert(errorMsg);											
+			} 
+		});
+	});
+
+</script>
