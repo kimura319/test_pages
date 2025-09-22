@@ -1,0 +1,139 @@
+<div class="toggle-vertical-group">
+    <label>
+        <input type="radio" name="toggle_input" id="toggle_teams" value="0" checked>
+        teams
+    </label>
+    <label>
+        <input type="radio" name="toggle_input" id="toggle_discord" value="1">
+        discord
+    </label>
+    <label>
+        <input type="radio" name="toggle_input" id="toggle_slack" value="2">
+        slack
+    </label>
+    <label>
+        <input type="radio" name="toggle_input" id="toggle_line" value="3">
+        LINE
+    </label>
+</div>
+
+<style>
+    .toggle-vertical-group {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        margin-bottom: 20px;
+        text-align: left;
+        font-size: 17px;
+	}
+    
+    .toggle-vertical-group input {
+        appearance: none;
+
+        margin-right: 10px;
+        width: 10px;
+        height: 20px;
+        border: 6px solid #3e32e7;
+        border-radius: 20%;
+        cursor: pointer;
+        transition: border 0.3s ease;
+    }
+
+    .toggle-vertical-group input:checked {
+      border: 6px solid #c1bdff;
+      color: rgb(4335ff, 114, 114);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const title = document.getElementById('title') as HTMLElement;
+        const toggle_teams = document.getElementById('toggle_teams') as HTMLInputElement;
+        const toggle_discord = document.getElementById('toggle_discord') as HTMLInputElement;
+        const toggle_slack = document.getElementById('toggle_slack') as HTMLInputElement;
+        const toggle_line = document.getElementById('toggle_line') as HTMLInputElement;
+		const url_wrapper = document.getElementById('url_wrapper') as HTMLElement;
+		const token_wrapper = document.getElementById('token_wrapper') as HTMLElement;
+        
+        // placeholderの設定
+        const placeholders = {
+            teams: "https://api.example.com/webhook",
+            discord: "https://discord.com/api/webhooks/[ID]/[TOKEN]", 
+            slack: "https://hooks.slack.com/services",
+            line: "https://api.line.me/v2/bot/message/broadcast"
+        };
+
+        // URL入力欄の内容を固定する関数
+        function fix_url_input() {
+            const url_input = document.getElementById('url_input') as HTMLInputElement;
+            if (toggle_line.checked) {
+                if (url_input) {
+                    url_input.value = placeholders.line;
+                    url_input.readOnly = true; // 入力不可にする
+                }
+            } else {
+                if (url_input) {
+                    url_input.value = ""; // 初期化
+                    url_input.readOnly = false; // 入力可能に戻す
+                }
+            }
+        }
+        
+        // タイトルと Webhook URL のplaceholderを切り替える
+        function update_form() {
+            const url_input = document.getElementById('url_input') as HTMLInputElement;
+            
+            // placeholder の切り替え
+            switch (true) {
+                case toggle_teams.checked:
+                    if (url_input) url_input.placeholder = placeholders.teams;
+                    title.textContent = "Teams";
+                    break;
+                case toggle_discord.checked:
+                    if (url_input) url_input.placeholder = placeholders.discord;
+                    title.textContent = "Discord";
+                    break;
+                case toggle_slack.checked:
+                    if (url_input) url_input.placeholder = placeholders.slack;
+                    title.textContent = "Slack";
+                    break;
+                case toggle_line.checked:
+                    if (url_input) url_input.placeholder = placeholders.line;
+                    title.textContent = "LINE";
+                    break;
+                default:
+                    if (url_input) url_input.placeholder = placeholders.teams;
+                    title.textContent = "Teams";
+                    break;
+            }
+            // トークンのときはURL欄を固定する
+            fix_url_input();
+        }
+
+        // トークン入力欄の表示・非表示を切り替え
+        function update_toggle() {
+			if (toggle_line.checked) {
+				url_wrapper.style.display = 'none';
+				token_wrapper.style.display = '';
+			} else {
+				url_wrapper.style.display = '';
+				token_wrapper.style.display = 'none';
+			}
+		}
+        
+        // ラジオボタンにイベントリスナーを追加
+        const notification_services = [toggle_teams, toggle_discord, toggle_slack, toggle_line];
+        notification_services.forEach(service => {
+            if (service) {
+                service.addEventListener('change', update_toggle);
+                service.addEventListener('change', update_form);
+            }
+        });
+        
+        // 初期化
+        update_toggle();
+        update_form();
+
+    });
+</script>

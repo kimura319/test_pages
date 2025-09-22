@@ -5,317 +5,146 @@ import SerialApi from '../components/serial_api.astro';
 ---
 
 <Layout>
-	<div class="main-flex-container">
-
-		<div class="demo-container">
-			<h2>pagesのデモ</h2>
-			
+	<section class="form-section">
+		<div id="title_wrapper" class="title-wrapper">
+            <span id="title" class="title" aria-live="polite">Teams</span>
+        </div>
+		<form class="form-card">
 			<TextBox 
 				label="SSID" 
-				placeholder="ssid_example" 
+				placeholder="your ssid here" 
 				type="text"
-				id="ssid" 
-				name="ssid" 
+				id="ssid_input" 
+				name="ssid_input" 
 				maxlength={32}
 				required={true}
 			/>
-
 			<TextBox 
 				label="パスワード" 
-				placeholder="absd12345" 
+				placeholder="your password here" 
 				type="password"
-				id="pass" 
-				name="pass" 
+				id="password_input" 
+				name="password_input" 
 				maxlength={64}
 				required={true}
 			/>
-
-			<TextBox 
-				label="webhook URL" 
-				placeholder="https://example.com/webhook" 
-				type="url"
-				id="input_url" 
-				name="input_url" 
-				pattern="https://.*"
-				maxlength={300}
-				required={true}
-			/>
-			<span id="url_error" style="color:#ef2222; display:none; font-size:14px;">
-				URLはhttps://から始まる必要があります
-			</span>
-
-			<div class="button-container">
-				<button id="binary_modify_button" class="binary-modify-button" disabled>
-					バイナリ加工
-				</button>
+			<div id="url_wrapper" class="url-wrapper">
+				<TextBox 
+					label="Webhook URL" 
+					placeholder="https://example.com/webhook" 
+					type="url"
+					id="url_input" 
+					name="url_input" 
+					pattern="https://.*"
+					maxlength={300}
+					required={true}
+				/>
+				<span id="url_error" class="error">
+					URLはhttps://から始まる必要があります
+				</span>
 			</div>
 
-			<div id="resultMessage" class="result-message" style="display: none;">
-				<p id="result_text"></p>
+			<div id="token_wrapper" class="token-wrapper" style="display:none;">
+				<TextBox 
+					label="Access Token" 
+					placeholder="your token here" 
+					type="text"
+					id="token" 
+					name="token" 
+					maxlength={64}
+					required={true}
+				/>
 			</div>
-
-			<div id="statusMessage" class="status-message" style="display: none;">
-				<p id="statusText"></p>
-			</div>
-		</div>
-	
-	<SerialApi />
-
-	</div>
+			<SerialApi />
+		</form>
+	</section>
 </Layout>
 
 <style>
-
-	.main-flex-container {
-        display: flex;
-        gap: 40px; /* コンテナ間の余白 */
-        justify-content: center;
-        align-items: center;
-		max-width: 800px;
-		margin: 0 auto;
-    }
-	.demo-container {
-		max-width: 600px;
-		min-width: 400px;
-		margin: 150px auto;
-		padding: 0 20px;
+	.form-section {
+		width: 100%;
+		max-width: 480px;
+		margin: 40px auto;
+		padding: 0 12px;
 	}
-
-	.demo-container h2 {
-		color: #2A233E;
-		font-size: 24px;
-		font-weight: bold;
-		margin-bottom: 30px;
-		text-align: center;
-	}
-
-	.button-container {
+	.form-card {
+		background: #fff;
+		border-radius: 12px;
+		box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+		padding: 32px 24px 24px 24px;
 		display: flex;
-		justify-content: center;
-		gap: 30px;
-		margin-top: 20px;
-		margin-bottom: 20px;
+		flex-direction: column;
+		gap: 25px;
 	}
+	.error {
+		color: #ef2222;
+		font-size: 14px;
+		margin-bottom: 8px;
+		display: none;
+	}
+	.title-wrapper {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 16px;
+    }
+    .title {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #8e6eff;
+        font-family: 'Noto Sans', 'Arial', sans-serif;
+        letter-spacing: 1px;
+    }
 
-	.binary-download-button {
-		padding: 12px 24px;
-		background-color: #66cc73;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 16px;
-		font-weight: bold;
-		cursor: pointer;
-		transition: background-color 0.3s ease;
-		min-width: 120px;
-	}
-
-	.binary-modify-button {
-		padding: 12px 24px;
-		background-color: #8e6eff;
-		color: white;
-		border: none;
-		border-radius: 8px;
-		font-size: 16px;
-		font-weight: bold;
-		cursor: pointer;
-		transition: background-color 0.3s ease;
-		min-width: 120px;
-	}
-
-	.binary-modify-button:disabled {
-		background-color: #9ca3af;
-		cursor: not-allowed;
-	}
-	.result-message {
-		text-align: center;
-		padding: 15px;
-		background-color: #f0f9ff;
-		border: 2px solid #0ea5e9;
-		border-radius: 8px;
-		margin-top: 20px;
-	}
-
-	.result-message p {
-		margin: 0;
-		color: #0c4a6e;
-		font-size: 18px;
-		font-weight: bold;
-	}
-
-	.result-message span {
-		color: #FF7E33;
-	}
-
-	.status-message {
-		text-align: center;
-		padding: 15px;
-		border-radius: 8px;
-		margin-top: 10px;
-	}
-
-	.status-message.success {
-		background-color: #f0fdf4;
-		border: 2px solid #22c55e;
-		color: #15803d;
-	}
-
-	.status-message.error {
-		background-color: #fef2f2;
-		border: 2px solid #ef4444;
-		color: #dc2626;
-	}
-
-	.status-message.loading {
-		background-color: #fefce8;
-		border: 2px solid #eab308;
-		color: #a16207;
-	}
-
-	.status-message p {
-		margin: 0;
-		font-weight: bold;
-	}
-
+    .form-card label,
+    .form-card input,
+    .form-card .textbox-label,
+    .form-card .textbox-input {
+        font-family: 'Noto Sans', 'Arial', sans-serif;
+        font-size: 16px;
+        line-height: 1.6;
+        letter-spacing: 0.03em;
+        font-feature-settings: "palt";
+    }
 </style>
 
 <script>
 	// DOMが読み込まれた後に実行
 	document.addEventListener('DOMContentLoaded', function() {
-		const ssid_input = document.getElementById('ssid') as HTMLInputElement;
-		const pass_input = document.getElementById('pass') as HTMLInputElement;
-		const url_input = document.getElementById('input_url') as HTMLInputElement;
-		const binary_modify_button = document.getElementById('binary_modify_button') as HTMLButtonElement;
-		const resultMessage = document.getElementById('resultMessage') as HTMLElement;
-		const result_text = document.getElementById('result_text') as HTMLElement;
+		// 入力
+		const ssid_input = document.getElementById('ssid_input') as HTMLInputElement;
+		const pass_input = document.getElementById('password_input') as HTMLInputElement;
+		const url_input = document.getElementById('url_input') as HTMLInputElement;
+		// 書き込みボタン
+		const flash_button = document.getElementById('flash_button') as HTMLButtonElement;
 		const url_error = document.getElementById('url_error') as HTMLElement;
+		// シリアル接続ボタン
+		const connect_button = document.getElementById('connect_button') as HTMLButtonElement;
 
-		const connectButton = document.getElementById('connectButton') as HTMLButtonElement;
-		const disconnectButton = document.getElementById('disconnectButton') as HTMLButtonElement;
-		const statusElement = document.getElementById('status') as HTMLSpanElement;
-
-		// Web Serial API ============================================
-		let port: SerialPort | null = null;
-		let writer: WritableStreamDefaultWriter | null = null;
-
-		// シリアル接続
-		connectButton?.addEventListener('click', async () => {
-			try {
-				// シリアルポートの選択
-				port = await (navigator as any).serial.requestPort();
-				
-				// ポートを開く（ボーレート等の設定）
-				await port.open({ 
-					baudRate: 115200,
-					dataBits: 8,
-					stopBits: 1,
-					parity: 'none'
-				});
-
-				if (!writer && port) {
-					writer = port.writable.getWriter();
-				}
-
-				if (statusElement) {
-					statusElement.textContent = '接続済み';
-					statusElement.style.color = '#34d399';
-				}
-				if (connectButton) connectButton.disabled = true;
-				if (disconnectButton) disconnectButton.disabled = false;
-
-			} catch (error) {
-				console.error('接続エラー:', error);
-			}
-		});
-
-		// シリアル切断
-		disconnectButton?.addEventListener('click', async () => {
-			try {
-				if (writer) {
-					writer.releaseLock();
-					writer = null;
-				}
-				if (port) {
-					await port.close();
-					port = null;
-				}
-				
-				if (statusElement) {
-					statusElement.textContent = '未接続';
-					statusElement.style.color = '#6b7280';
-				}
-				if (connectButton) connectButton.disabled = false;
-				if (disconnectButton) disconnectButton.disabled = true;
-
-			} catch (error) {
-				console.error('切断エラー:', error);
-			}
-		});
-
-		// Web Serial API の対応チェック
-		if (!('serial' in navigator)) {
-			if (statusElement) {
-				statusElement.textContent = 'Web Serial API未対応';
-				statusElement.style.color = '#f87171';
-			}
-			if (connectButton) connectButton.disabled = true;
-		}
-		// =============================================================
-
-		if (!ssid_input || !pass_input || !url_input || !binary_modify_button || !resultMessage || !result_text) {
+		// 必須要素のチェック
+		if (!ssid_input || !pass_input || !url_input || !flash_button) {
 			console.error('Required elements not found');
 			return;
 		}
 
 		// 名前入力フィールドの変更を監視
-		ssid_input.addEventListener('input', updateButtonState);
-		pass_input.addEventListener('input', updateButtonState);
-		url_input.addEventListener('input', updateButtonState);
+		ssid_input.addEventListener('input', update_button_state);
+		pass_input.addEventListener('input', update_button_state);
+		url_input.addEventListener('input', update_button_state);
 
-		// 入力値の両方がある場合のみボタンを有効化
-        function updateButtonState() {
-            const user_ssid = ssid_input.value.trim();
-			const user_pass = pass_input.value.trim();
-			const user_url = url_input.value.trim();
-			const isUrlValid = /^https:\/\/.+/.test(user_url);
-            const enabled = user_ssid.length > 0 && user_pass.length > 0 && user_url.length > 0 && isUrlValid;
-            binary_modify_button.disabled = !enabled;
+		// 全入力値が存在し、urlが適切な場合のみ、ボタンを有効化
+        function update_button_state() {
+            const ssid = ssid_input.value.trim();
+			const pass = pass_input.value.trim();
+			const url = url_input.value.trim();
+
+			const isUrlValid = /^https:\/\/.+/.test(url);
+            const enabled = ssid.length > 0 && pass.length > 0 && url.length > 0 && isUrlValid;
+            flash_button.disabled = !enabled;
         }
+		update_button_state(); // 初期状態の更新
 
-		// 結果メッセージを表示
-		function display_result_message(message:string) {
-			resultMessage.style.display = 'block';
-			resultMessage.className = 'result-message';
-			result_text.textContent = message;
-        }
-
-		// ファイルをダウンロード
-		function click_download(url: string) {
-			const a = document.createElement('a');
-			document.body.appendChild(a); // Firefox対応
-			a.href = url;
-			a.download = 'firmware.bin'; // ダウンロードするファイル名
-			a.click(); // 自動的にダウンロードを開始
-        }
-
-		// バイナリファイルを加工
-		function modify_binary(bytes: Uint8Array, keyword: string, replace_len: number, name: string) {
-			const keyword_bytes = Array.from(keyword).map(b => b.charCodeAt(0));
-			for (let byte_cnt = 0; byte_cnt < bytes.length - replace_len ; byte_cnt++) {
-				if (keyword_bytes.every((char_byte, index) => bytes[byte_cnt + index] === char_byte)) {
-					for (let i = 0; i < replace_len; i++) {
-						if (name.length <= i) {
-							bytes[byte_cnt + i] = 0; // 名前が短い場合は0で埋める
-						}
-						bytes[byte_cnt + i] = name.charCodeAt(i);
-					}
-					break; // 最初の一致のみ処理
-				}
-			}
-		}
-
-		// url の入力のバリデーション
-		function handleUrlInputEvent(event: any) {
+		// urlの入力のバリデーション
+		function handle_url_input_event(event: any) {
 			const val = url_input.value.trim();
 		    const isValid = /^https:\/\/.+/.test(val) || val.length === 0;
 
@@ -333,51 +162,11 @@ import SerialApi from '../components/serial_api.astro';
 				// それ以外のケースでは何もしない
 				return;
 			}
-			updateButtonState();
+			update_button_state();
 		};
 
-		url_input.addEventListener('blur', handleUrlInputEvent);
-		url_input.addEventListener('input', handleUrlInputEvent);
-
-		// バイナリ加工ボタンのクリックイベント
-		binary_modify_button.addEventListener('click', async function() {
-			const user_ssid = ssid_input.value.trim();
-			const user_pass = pass_input.value.trim();
-			const user_url = url_input.value.trim();
-
-			if(user_ssid && user_pass && user_url) {
-				display_result_message('入力完了');	// resultMessageの表示
-			}
-
-			try {
-				// 加工するバイナリファイル
-				const bainary_file = await fetch('/test_pages/firmware.bin');
-				const arrayBuffer = await bainary_file.arrayBuffer();
-				const bytes = new Uint8Array(arrayBuffer);
-
-				// バイナリファイルを加工
-				modify_binary(bytes, 'FiBS_temporary_ssid_2025', 33, user_ssid);
-				modify_binary(bytes, 'FiBS_temporary_password_2025', 64, user_pass);
-				modify_binary(bytes, 'FiBS_temporary_url_2025', 300, user_url);
-
-				// MIMEタイプを指定し、bytesからBlobを作成
-				const blob = new Blob([bytes], { type: 'application/octet-stream' });
-				const url = URL.createObjectURL(blob);
-
-				click_download(url);
-				URL.revokeObjectURL(url);
-
-				// シリアル通信でバイナリ送信
-				if (!writer) {
-					alert('シリアル接続されていません。先に「シリアル接続」ボタンを押してください。');
-					return;
-				}
-				await writer.write(bytes);
-            	alert('バイナリ送信完了');
-			} catch (e) {
-        	result_text.textContent = 'バイナリ取得失敗: ' + e;
-			} 
-		});
+		url_input.addEventListener('blur', handle_url_input_event);
+		url_input.addEventListener('input', handle_url_input_event);
 
 		// Enterキーで次のフォーム入力
 		ssid_input.addEventListener('keypress', function(event) {
@@ -385,17 +174,18 @@ import SerialApi from '../components/serial_api.astro';
 				pass_input.focus();
 			}
 		});
-		
+	
+		// Enterキーで次のフォーム入力
 		pass_input.addEventListener('keypress', function(event) {
 			if (event.key === 'Enter') {
 				url_input.focus();
 			}
 		});
 
-		// Enterキーでも決定できるようにする
+		// Enterキーで接続ボタンの動作
 		url_input.addEventListener('keypress', function(event) {
-			if (event.key === 'Enter' && !binary_modify_button.disabled) {
-				binary_modify_button.click();
+			if (event.key === 'Enter' && !connect_button.disabled) {
+				connect_button.click();
 			}
 		});
 	});
