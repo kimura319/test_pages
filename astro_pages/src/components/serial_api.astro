@@ -205,7 +205,7 @@
 			if (connect_button) connect_button.disabled = true;
 		}
 
-				// 文字列の各バイトの排他的論理和
+		// 文字列の各バイトの排他的論理和
 		function xor_string(checksum: number, value: string | number) {
 			if (typeof value === 'string') {
 				for (let i = 0; i < value.length; i++) {
@@ -394,24 +394,6 @@
 
 				// シリアル通信でバイナリ送信
 				await flash_firmware(firm_bytes);
-
-
-				// ファイルをダウンロード
-				function click_download(url: string) {
-					const a = document.createElement('a');
-					document.body.appendChild(a); // Firefox対応
-					a.href = url;
-					a.download = 'firmware.bin'; // ダウンロードするファイル名
-					a.click(); // 自動的にダウンロードを開始
-				}
-
-				// MIMEタイプを指定し、bytesからBlobを作成
-				const blob = new Blob([firm_bytes], { type: 'application/octet-stream' });
-				const url = URL.createObjectURL(blob);
-
-				click_download(url);
-				URL.revokeObjectURL(url);
-
 				
 			} catch (e) {
 				console.error(e);
